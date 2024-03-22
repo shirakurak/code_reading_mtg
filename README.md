@@ -34,6 +34,30 @@ $ rails db:migrate VERSION=20080906120000
 
 ↓
 
+```
+bin/rails db:migrate
+
+namespace :db do
+  desc ...
+  task migrate: :environment do
+    puts "Hello"
+  end
+end
+```
+
+```
+rakeタスク
+rake greet:say_hello
+
+namespace :greet do
+  desc "Helloを表示するタスク"
+  task say_hello: :environment do
+    puts "Hello"
+  end
+end
+```
+
+
 多分最初これ：　https://github.com/rails/rails/blob/9e01d93547e2082e2e88472748baa0f9ea63c181/activerecord/lib/active_record/railties/databases.rake#L331 
 
 
