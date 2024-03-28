@@ -1,4 +1,6 @@
-# code_reading_mtg
+# Active Record Migrations の コードを読む
+
+Active Record Migrations
 
 以下、コードを読む会でのメモたち
 
