@@ -35,7 +35,18 @@ OSSのコードを読むとなると、いくらでも読んでしまうこと�
 ここから追いかけていった内容を記載していきます。
 ダラダラとコードの内容があるので、最後のまとめだけ読みたい方はこちら。
 
----
+### STEP1. ざっくりディレクトリ構成を確認
+
+
+
+### STEP2. schema_migationsで検索
+
+何はともあれ、検索することから始めます。
+`.`を押すと、ブラウザ上でvscode開くので便利だよ。
+
+
+
+
 
 db:migrateの実行の流れをまとめる！
 
@@ -302,6 +313,12 @@ run
 
 migrate_without_lock（private）
 
+run_without_lock（private）
+
+execute_migration_in_transaction（private）
+
+record_version_state_after_migrating（private）
+
 ---
 
 ## まとめ
@@ -309,10 +326,3 @@ migrate_without_lock（private）
 最後に良かったこととして、OSSでも別に読めるな、ということがちゃんとわかったことです。
 OSSはなんか凄そうとか、よくわからない実装だとか、あるいは逆に実はめちゃわかりやすいのでは、とかそういうふうに特別視する必要ないということです。
 普通にプロダクト開発しているコードと同じように、難しいところもあれば、わかりやすいところもあるしって感じで、人の書いたコードだなと思いました。
-
-
-run_without_lock（private）
-
-execute_migration_in_transaction（private）
-
-record_version_state_after_migrating（private）
