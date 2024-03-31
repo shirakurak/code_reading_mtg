@@ -1,4 +1,5 @@
-# Active Record Migrations の コードを読む
+# Railsのマイグレーションについて、ソースコードを理解してみる。
+\#冒険
 
 Active Record Migrations は、Ruby on Rails におけるデータベースのスキーマの管理をする機能です。
 今回は、そのコードを実際に読むという勉強会を実施していたので、記事化してみます。
