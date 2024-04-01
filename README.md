@@ -187,7 +187,7 @@ Current version: 20220808075632
       mapped_versions.sort.each do |version, db_configs|
         db_configs.each do |db_config|
           ActiveRecord::Tasks::DatabaseTasks.with_temporary_connection(db_config) do
-            ActiveRecord::Tasks::DatabaseTasks.migrate(version)
+            ActiveRecord::Tasks::DatabaseTasks.migrate(version) # ここに注目！
           end
         end
       end
@@ -197,11 +197,13 @@ Current version: 20220808075632
   end
 ```
 
-データベースが複数ある場合で分岐されていますが、
+データベースが複数ある場合、ない場合で分岐されているようで、、
 ```ruby
 ActiveRecord::Tasks::DatabaseTasks.migrate(version)
 ```
-ここでマイグレーションしていることには違いなさそうなので、
+ここでマイグレーションしていることには違いなさそうです。
+
+versionsはソートされていることも確認できますね。
 
 activerecord/lib/active_record/tasks/database_tasks.rb
 を確認します。
@@ -252,18 +254,17 @@ MigrationContextクラス
       end
     end
 ```
-migrateメソッドでは、
+migrateメソッドでは、target_versionによる分岐が行われており、
 
-target_versionによる分岐が行われており、
+activerecord/lib/active_record/tasks/database_tasks.rbファイルのtarget_versionメソッドで渡されているENV["VERSION"]、
 
-activerecord/lib/active_record/tasks/database_tasks.rbファイルのtarget_versionメソッドで渡されているENV["VERSION"]。
+つまり、コマンドでVERSION指定した日付を使っていることがわかります。
 
-つまり、コマンドでVERSION指定した日付が入ってくるということになります。
 ```
 $ rails db:migrate VERSION=20220808075632
 ```
 
-target_versionによって分岐され、
+その後、target_versionによって分岐され、
 同じクラス内のupメソッドやdownメソッドが実行されると、
 
 MigrationContextクラス
@@ -277,21 +278,88 @@ MigrationContextクラス
 
       Migrator.new(:up, selected_migrations, schema_migration, internal_metadata, target_version).migrate
     end
+```
+&blockによって、マイグレーションするファイルを決定すると、Migratorをインスタンス化して、
 
-    def down(target_version = nil, &block) # :nodoc:
-      selected_migrations = if block_given?
-        migrations.select(&block)
+migrateメソッドを実行します。
+
+Migratorクラス
+```activerecord/lib/active_record/migration.rb
+    def migrate
+      if use_advisory_lock?
+        with_advisory_lock { migrate_without_lock }
       else
-        migrations
+        migrate_without_lock
       end
-
-      Migrator.new(:down, selected_migrations, schema_migration, internal_metadata, target_version).migrate
     end
 ```
+マイグレーションの実行中にアドバイザリーロックを使用するかどうかで分岐しています。
+アドバイザリーロックとは、他のプロセスが同時にマイグレーションを実行することを防ぐことができます。
+
+アドバイザリーロックがない場合は、
+```ruby
+      def migrate_without_lock
+        if invalid_target?
+          raise UnknownMigrationVersionError.new(@target_version)
+        end
+
+        record_environment
+        runnable.each(&method(:execute_migration_in_transaction))
+      end
+```
+migrate_without_lockが実行され、execute_migration_in_transactionメソッドによって、
+upメソッドやdownメソッドなどによって、テーブルが更新されて、
+schema_migrationsにインサートされていきます。
+
+
+Migratorクラス
+```activerecord/lib/active_record/migration.rb
+def execute_migration_in_transaction(migration)
+        return if down? && !migrated.include?(migration.version.to_i)
+        return if up?   &&  migrated.include?(migration.version.to_i)
+
+        Base.logger.info "Migrating to #{migration.name} (#{migration.version})" if Base.logger
+
+        ddl_transaction(migration) do
+          migration.migrate(@direction)
+          record_version_state_after_migrating(migration.version)
+        end
+      rescue => e
+        msg = +"An error has occurred, "
+        msg << "this and " if use_transaction?(migration)
+        msg << "all later migrations canceled:\n\n#{e}"
+        raise StandardError, msg, e.backtrace
+      end
+```
+
+この後は、
+①のmigration_connection_pool.schema_cache.clear!によって、
+変更されたスキーマが正確に反映されます。
+これで、
+
+1. schema_migrationテーブルに履歴のない、マイグレーションが実行
+1. db/schema.rbのスキーマファイルを更新
+1. schema_migrationテーブルにタイムスタンプのレコードを追加
+
+の3つの処理が実行される流れを追うことができました👏
+
+## まとめ
+
+
+最後に良かったこととして、OSSでも別に読めるな、ということがちゃんとわかったことです。
+OSSはなんか凄そうとか、よくわからない実装だとか、あるいは逆に実はめちゃわかりやすいのでは、とかそういうふうに特別視する必要ないということです。
+普通にプロダクト開発しているコードと同じように、難しいところもあれば、わかりやすいところもあるしって感じで、人の書いたコードだなと思いました。
+
+
+
+
+
+--- 
+📝メモ
 
 
 activerecord/lib/active_record/connection_adapters/abstract/connection_pool.rb
-にある、u
+にある、
 
 https://github.dev/rails/rails/blob/9e01d93547e2082e2e88472748baa0f9ea63c181/activerecord/lib/active_record/railties/databases.rake#L181
 
@@ -505,9 +573,3 @@ execute_migration_in_transaction（private）
 record_version_state_after_migrating（private）
 
 ---
-
-## まとめ
-
-最後に良かったこととして、OSSでも別に読めるな、ということがちゃんとわかったことです。
-OSSはなんか凄そうとか、よくわからない実装だとか、あるいは逆に実はめちゃわかりやすいのでは、とかそういうふうに特別視する必要ないということです。
-普通にプロダクト開発しているコードと同じように、難しいところもあれば、わかりやすいところもあるしって感じで、人の書いたコードだなと思いました。
