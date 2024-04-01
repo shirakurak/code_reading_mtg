@@ -47,7 +47,7 @@ OSSのコードを読むとなると、いくらでも深く読んでいけて�
 ## 調べること🕵️‍♀️
 
 ```ruby
-rails db:migrate
+$ rails db:migrate VERSION=20220808075632
 ```
 を実行すると、
 
@@ -111,11 +111,14 @@ activerecord/lib/active_record/migration/ディレクトリ配下のファイル
 
 <img width="1290" alt="スクリーンショット 0006-04-01 17 45 19" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/54f66632-863f-4005-a8e2-de4c6a2a91f1">
 
+
 すると、いくつかファイルがヒットしたのですが、ヒットしたファイルの中で、`activerecord/lib/active_record/migration.rb`
 
 のファイルには、MigrationErrorクラスやMigrationContextクラス、Migratorクラスなどがあったので、
 
 クラスとそのクラスに定義されているメソッドを読んでいきました。
+
+<img width="746" alt="スクリーンショット 0006-04-01 17 54 18" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/ef42a6d8-db43-4325-ac17-f15ff95549be">
 
 すると、MigrationContextクラスには、upメソッドやdownメソッドなどが定義されており、Migratorクラスのインスタンスメソッドであるmigrateを実行していたので、
 
@@ -133,58 +136,100 @@ rails db:migrate
 
 となったので、最初のコマンド実行から、schema_migrationテーブルに日付がインサートされる流れを整理してみました。
 
-<img width="746" alt="スクリーンショット 0006-04-01 17 54 18" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/ef42a6d8-db43-4325-ac17-f15ff95549be">
 
-db:migrateの実行の流れをまとめる！
+#### db:migrateの実行の流れをまとめる！
 
-https://github.dev/rails/rails/blob/9e01d93547e2082e2e88472748baa0f9ea63c181/activerecord/lib/active_record/migration.rb
-
-
-
-
-下の流れを整理する
-
-migration_connectionがなんだかみる
-
-コマンドから、task up : : load config が呼ばれることの根拠
-
-
-
-
-db:migrateの実行の流れ
-
-コマンド実行、スタート！
-
-$ rails db:migrate VERSION=20080906120000
-
-↓
-
+```ruby
+rails db:migrate
 ```
-bin/rails db:migrate
 
-namespace :db do
-  desc ...
-  task migrate: :environment do
-    puts "Hello"
+が実行されると、
+
+activerecord/lib/active_record/railties/databases.rakeファイルの
+namespaceで定義されたdb:migrateのRakeタスクが実行されます。
+
+migrateだけでなく、status、rollback、versionなど、見たことがあるコマンドも拝見されます。
+
+確認のため、versionのタスクについては、putsで出力している箇所を確認してみました。
+```ruby
+  desc "Retrieve the current schema version number"
+  task version: :load_config do
+    ActiveRecord::Tasks::DatabaseTasks.with_temporary_pool_for_each(env: Rails.env) do |pool|
+      puts "\ndatabase: #{pool.db_config.database}\n"
+      puts "Current version: #{pool.migration_context.current_version}"
+      puts
+    end
   end
-end
 ```
 
 ```
-rakeタスク
-rake greet:say_hello
+➜  git:(main) ✗ rails db:version
+Running via Spring preloader in process 26
+Current version: 20220808075632
+```
+ちゃんと書かれていることが確認できました！
 
-namespace :greet do
-  desc "Helloを表示するタスク"
-  task say_hello: :environment do
-    puts "Hello"
+ちなみに、:load_configは、config/database.ymlファイルのデータベース設定を読み込んで、
+
+タスク実行でデータベースを接続する準備をしているようです。
+
+それでは、migrateを辿ります。
+```ruby
+  desc "Migrate the database (options: VERSION=x, VERBOSE=false, SCOPE=blog)."
+  task migrate: :load_config do
+    db_configs = ActiveRecord::Base.configurations.configs_for(env_name: ActiveRecord::Tasks::DatabaseTasks.env)
+
+    if db_configs.size == 1
+      ActiveRecord::Tasks::DatabaseTasks.migrate
+    else
+      mapped_versions = ActiveRecord::Tasks::DatabaseTasks.db_configs_with_versions
+
+      mapped_versions.sort.each do |version, db_configs|
+        db_configs.each do |db_config|
+          ActiveRecord::Tasks::DatabaseTasks.with_temporary_connection(db_config) do
+            ActiveRecord::Tasks::DatabaseTasks.migrate(version)
+          end
+        end
+      end
+    end
+
+    db_namespace["_dump"].invoke
   end
-end
 ```
 
+データベースが複数ある場合で分岐されていますが、
+```ruby
+ActiveRecord::Tasks::DatabaseTasks.migrate(version)
+```
+ここでマイグレーションしていることには違いなさそうなので、
 
-多分最初これ：　https://github.com/rails/rails/blob/9e01d93547e2082e2e88472748baa0f9ea63c181/activerecord/lib/active_record/railties/databases.rake#L331 
+activerecord/lib/active_record/tasks/database_tasks.rb
+を確認します。
 
+```activerecord/lib/active_record/tasks/database_tasks.rb
+      def migrate(version = nil)
+        scope = ENV["SCOPE"]
+        verbose_was, Migration.verbose = Migration.verbose, verbose?
+
+        check_target_version
+
+        migration_connection_pool.migration_context.migrate(target_version) do |migration|
+          if version.blank?
+            scope.blank? || scope == migration.scope
+          else
+            migration.version == version
+          end
+        end.tap do |migrations_ran|
+          Migration.write("No migrations ran. (using #{scope} scope)") if scope.present? && migrations_ran.empty?
+        end
+
+        migration_connection_pool.schema_cache.clear!
+      ensure
+        Migration.verbose = verbose_was
+      end
+```
+
+そして、
 
 
 https://github.dev/rails/rails/blob/9e01d93547e2082e2e88472748baa0f9ea63c181/activerecord/lib/active_record/railties/databases.rake#L181
@@ -210,9 +255,7 @@ load_config
 
 https://github.com/rails/rails/blob/9e01d93547e2082e2e88472748baa0f9ea63c181/activerecord/lib/active_record/railties/databases.rake#L11-L28 
 
-DBの設定値などを読み込んでいる？（保留）
 
-activerecord/lib/active_record/tasks/database_tasks.rb:156
 
 参考：  
 
