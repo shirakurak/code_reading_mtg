@@ -163,7 +163,7 @@ migrateだけでなく、status、rollback、versionなど、見たことがあ�
 ```
 
 ```
-➜  git:(main) ✗ rails db:version
+$ rails db:version
 Running via Spring preloader in process 26
 Current version: 20220808075632
 ```
