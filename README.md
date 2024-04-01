@@ -64,7 +64,7 @@ rails db:migrate
 ここから追いかけていった内容を記載していきます。
 ダラダラとコードの内容があるので、最後のまとめだけ読みたい方はこちら。
 
-### STEP1. ざっくりディレクトリ構成を確認
+### STEP1. ざっくりディレクトリ構成を把握する
 
 https://github.com/rails/rails
 ソースコードのツリー構造を確認します。
@@ -75,19 +75,65 @@ https://github.com/rails/rails
 
 その気持ちをグッと堪えて、activerecordを見ていきます。
 
-activerecord以下のディレクトリは、
+activerecord配下で、マイグレーションしてそうなディレクトリとファイルを発見しました。
+
+<img width="777" alt="スクリーンショット 0006-04-01 17 16 43" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/cfa4e646-6f59-418a-99f5-09803acbf3b3">
+
+### STEP2.ファイルの中身を読んでみる
+このステップでは、結局理解できなかったので、読み飛ばしてもらっても大丈夫です！
+
+activerecord/lib/active_record/migration/ディレクトリ配下のファイルを見てみます。
+
+- command_recorder.rb
+  - マイグレーション中に行われたコマンドを記録し、それらを逆転させられるようにするファイル？
+- compatibility.rb
+  - Railsのバージョンが違う場合でもマイグレーションできるようにするファイル？
+- default_strategy.rb
+  -  マイグレーション実行のためのデフォルトのファイル？
+- execution_strategy.rb
+  - 異なるマイグレーションを実行するときに使うファイル？
+- join_table.rb
+  - joinテーブルの作成や削除をサポートするヘルパーメソッドを提供するファイル？
+- pending_migration_connection.rb
+  - 未実行のマイグレーションが存在するかどうかをチェックするためにDBに接続するためのファイル？
+
+この読み方では流れを理解できないことがわかりました🙅‍♀️
 
 
-
-
-### STEP2. schema_migationsで検索
+### STEP3. 「schema_migations」で検索してみる
 
 何はともあれ、検索することから始めます。
-`.`を押すと、ブラウザ上でvscode開くので便利だよ。
+ソースコードのページで`.`を押すと、ブラウザ上でVSCode開くことができるので、
 
+そこで、検索をしてみます。
 
+「schema_migations」で検索。
 
+<img width="1290" alt="スクリーンショット 0006-04-01 17 45 19" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/54f66632-863f-4005-a8e2-de4c6a2a91f1">
 
+すると、いくつかファイルがヒットしたのですが、ヒットしたファイルの中で、`activerecord/lib/active_record/migration.rb`
+
+のファイルには、MigrationErrorクラスやMigrationContextクラス、Migratorクラスなどがあったので、
+
+クラスとそのクラスに定義されているメソッドを読んでいきました。
+
+すると、MigrationContextクラスには、upメソッドやdownメソッドなどが定義されており、Migratorクラスのインスタンスメソッドであるmigrateを実行していたので、
+
+間違いなく、ここでup、downのマイグレーションを行っていることがわかりました。
+
+ここからは、とにかくメソッドを辿って辿って読んでいくと、流れを掴むことができました！👏
+
+### STEP4. マイグレーションされる流れを整理する
+とにかく辿って読む、、辿って読む、、を繰り返していたのですが、
+
+```ruby
+rails db:migrate
+```
+実行後の流れをなんか理解できた気がする！けど、本当に理解できているのか？🤔
+
+となったので、最初のコマンド実行から、schema_migrationテーブルに日付がインサートされる流れを整理してみました。
+
+<img width="746" alt="スクリーンショット 0006-04-01 17 54 18" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/ef42a6d8-db43-4325-ac17-f15ff95549be">
 
 db:migrateの実行の流れをまとめる！
 
@@ -96,17 +142,11 @@ https://github.dev/rails/rails/blob/9e01d93547e2082e2e88472748baa0f9ea63c181/act
 
 
 
-
-残TODO
-
 下の流れを整理する
 
 migration_connectionがなんだかみる
 
 コマンドから、task up : : load config が呼ばれることの根拠
-
-
-
 
 
 
