@@ -130,7 +130,7 @@ activerecord/lib/active_record/migration/ディレクトリ配下のファイル
 とにかく辿って読む、、辿って読む、、を繰り返していたのですが、
 
 ```ruby
-rails db:migrate
+$ rails db:migrate VERSION=20220808075632
 ```
 実行後の流れをなんか理解できた気がする！けど、本当に理解できているのか？🤔
 
@@ -140,7 +140,7 @@ rails db:migrate
 #### db:migrateの実行の流れをまとめる！
 
 ```ruby
-rails db:migrate
+$ rails db:migrate VERSION=20220808075632
 ```
 
 が実行されると、
@@ -230,7 +230,68 @@ activerecord/lib/active_record/tasks/database_tasks.rb
 ```
 
 そして、
+```ruby
+migration_connection_pool.migration_context.migrate(target_version) do |migration|
+...
+```
+によって、データベースに接続したあと、migration_contextメソッドが呼び出され、
+MigrationContextクラスをインスタンス化し、migrateメソッドを呼び出します。
 
+MigrationContextクラス
+```activerecord/lib/active_record/migration.rb
+    def migrate(target_version = nil, &block)
+      case
+      when target_version.nil?
+        up(target_version, &block)
+      when current_version == 0 && target_version == 0
+        []
+      when current_version > target_version
+        down(target_version, &block)
+      else
+        up(target_version, &block)
+      end
+    end
+```
+migrateメソッドでは、
+
+target_versionによる分岐が行われており、
+
+activerecord/lib/active_record/tasks/database_tasks.rbファイルのtarget_versionメソッドで渡されているENV["VERSION"]。
+
+つまり、コマンドでVERSION指定した日付が入ってくるということになります。
+```
+$ rails db:migrate VERSION=20220808075632
+```
+
+target_versionによって分岐され、
+同じクラス内のupメソッドやdownメソッドが実行されると、
+
+MigrationContextクラス
+```activerecord/lib/active_record/migration.rb
+    def up(target_version = nil, &block) # :nodoc:
+      selected_migrations = if block_given?
+        migrations.select(&block)
+      else
+        migrations
+      end
+
+      Migrator.new(:up, selected_migrations, schema_migration, internal_metadata, target_version).migrate
+    end
+
+    def down(target_version = nil, &block) # :nodoc:
+      selected_migrations = if block_given?
+        migrations.select(&block)
+      else
+        migrations
+      end
+
+      Migrator.new(:down, selected_migrations, schema_migration, internal_metadata, target_version).migrate
+    end
+```
+
+
+activerecord/lib/active_record/connection_adapters/abstract/connection_pool.rb
+にある、u
 
 https://github.dev/rails/rails/blob/9e01d93547e2082e2e88472748baa0f9ea63c181/activerecord/lib/active_record/railties/databases.rake#L181
 
