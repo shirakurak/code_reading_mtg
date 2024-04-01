@@ -1,4 +1,4 @@
-# Railsのマイグレーションについて、ソースコードを理解してみる。
+# Railsのマイグレーションについて、ActiveRecordの中身を読んでみる🗡️
 \#冒険
 \#コードを読む会
 
@@ -187,7 +187,7 @@ Current version: 20220808075632
       mapped_versions.sort.each do |version, db_configs|
         db_configs.each do |db_config|
           ActiveRecord::Tasks::DatabaseTasks.with_temporary_connection(db_config) do
-            ActiveRecord::Tasks::DatabaseTasks.migrate(version) # ここに注目！
+            ActiveRecord::Tasks::DatabaseTasks.migrate(version)
           end
         end
       end
@@ -207,7 +207,7 @@ versionsはソートされていることも確認できますね。
 
 activerecord/lib/active_record/tasks/database_tasks.rb
 を確認します。
-
+activerecord/lib/active_record/tasks/database_tasks.rb ー①
 ```activerecord/lib/active_record/tasks/database_tasks.rb
       def migrate(version = nil)
         scope = ENV["SCOPE"]
@@ -344,11 +344,28 @@ def execute_migration_in_transaction(migration)
 の3つの処理が実行される流れを追うことができました👏
 
 ## まとめ
+実際にActiveRcordの中身を読んでみて、**「OSSも意外に読める！」** ということが分かりました。
+
+これまで、「OSSはなんか凄そう...」「きっと魔法のようなコードが書かれているんだろう...」と思っていました。
+
+しかし、実際に読んでみると、普通にプロダクト開発しているコードと同じように、難しいところもあれば、わかりやすいところもありました。
+
+加えて、コード変更した履歴が1ヶ月前にバージョンも更新されている行などもあり、人間味を感じられて面白いなと思いました。
 
 
-最後に良かったこととして、OSSでも別に読めるな、ということがちゃんとわかったことです。
-OSSはなんか凄そうとか、よくわからない実装だとか、あるいは逆に実はめちゃわかりやすいのでは、とかそういうふうに特別視する必要ないということです。
-普通にプロダクト開発しているコードと同じように、難しいところもあれば、わかりやすいところもあるしって感じで、人の書いたコードだなと思いました。
+**つまり、魔法は使ってなかったのです。**
+
+OSSだからといって、特別視する必要はないと思えたことが一番の収穫だと思っています。
+
+次は、OSSへのコミット
+
+
+
+
+
+
+
+
 
 
 
