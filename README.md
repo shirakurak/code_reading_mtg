@@ -49,7 +49,7 @@ activerecord配下で、マイグレーションしてそうなディレクト�
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/a495fd7d-ad00-4203-a6ba-b6e2797e0c4b)
 
 
-### STEP2.ファイルの中身を読んでみる
+### STEP2.ファイルの中身を確認
 <img width="777" alt="スクリーンショット 0006-04-01 17 16 43" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/cfa4e646-6f59-418a-99f5-09803acbf3b3">
 
 activerecord/lib/active_recordディレクトリ配下のファイルを見てみます。
