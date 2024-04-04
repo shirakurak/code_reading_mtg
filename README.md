@@ -41,6 +41,7 @@ https://github.com/rails/rails
 <img width="2918" alt="スクリーンショット 0006-04-01 9 19 02" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/d364f275-10ec-4332-abff-4d345bd9b8a9">
 
 ソースコードを見るだけでも、いろんな機能があることがわかります。
+
 他のディレクトリを見るとRailsの興味深い実装があちらこちらあって、浮気しちゃいそうになりますね😇
 
 その気持ちをグッと堪えて、activerecordを見ていきます。
