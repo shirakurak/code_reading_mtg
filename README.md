@@ -82,16 +82,15 @@ https://github.com/rails/rails
 
 activerecord配下で、マイグレーションしてそうなディレクトリとファイルを発見しました。
 
-<img width="777" alt="スクリーンショット 0006-04-01 17 16 43" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/cfa4e646-6f59-418a-99f5-09803acbf3b3">
-
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/a495fd7d-ad00-4203-a6ba-b6e2797e0c4b)
 
 
 ### STEP2.ファイルの中身を読んでみる
-このステップでは、結局理解できなかったので、読み飛ばしてもらっても大丈夫です！
+<img width="777" alt="スクリーンショット 0006-04-01 17 16 43" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/cfa4e646-6f59-418a-99f5-09803acbf3b3">
 
-activerecord/lib/active_record/migration/ディレクトリ配下のファイルを見てみます。
+activerecord/lib/active_recordディレクトリ配下のファイルを見てみます。
 
+#### migration/を見てみる
 - command_recorder.rb
   - マイグレーション中に行われたコマンドを記録し、それらを逆転させられるようにするファイル？
 - compatibility.rb
@@ -105,7 +104,14 @@ activerecord/lib/active_record/migration/ディレクトリ配下のファイル
 - pending_migration_connection.rb
   - 未実行のマイグレーションが存在するかどうかをチェックするためにDBに接続するためのファイル？
 
-この読み方では流れを理解できないことがわかりました🙅‍♀️
+#### migration.rbを見てみる
+- Error系のクラス
+- Migrationクラス
+- MigrationContextクラス
+- Migratorクラス
+
+どうやらこれは怪しそうだ。。👀
+
 
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/d4e0288a-982f-4140-a4b1-518c9a844a20)
 
