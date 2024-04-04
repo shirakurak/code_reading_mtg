@@ -8,6 +8,11 @@ Ruby on Railsは多機能なフレームワークですが、コマンドやメ�
 
 ソースコードを実際に読むことで、信頼性の高い情報源を読めるようになりたいと思い、社内勉強会を実施しました。
 
+## 想定読者📗
+- Railsを使えるだけでなく、Railsの仕組みに興味ある方
+- ActiveRecordの実装に興味があるけど何から手をつければいいか分からない方
+- 将来的にOSSのコントリビューターになってみたい方
+
 ## 勉強会のルール🕹️
 
 昨年、社内のバックエンドエンジニア数人で、プロダクトのコードを読むという勉強会を実施しており、その中で最終アウトプットとして、リファクタリングを行いました。
@@ -71,13 +76,15 @@ https://github.com/rails/rails
 <img width="2918" alt="スクリーンショット 0006-04-01 9 19 02" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/d364f275-10ec-4332-abff-4d345bd9b8a9">
 
 ソースコードを見るだけでも、いろんな機能があることがわかります。
-他のディレクトリを見るとRailsのよく使う機能がいくつもあって、浮気しちゃいそうになりますね😇
+他のディレクトリを見るとRailsの興味深い実装があちらこちらあって、浮気しちゃいそうになりますね😇
 
 その気持ちをグッと堪えて、activerecordを見ていきます。
 
 activerecord配下で、マイグレーションしてそうなディレクトリとファイルを発見しました。
 
 <img width="777" alt="スクリーンショット 0006-04-01 17 16 43" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/cfa4e646-6f59-418a-99f5-09803acbf3b3">
+![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/f9f120e7-922c-4d76-a150-bd1f4641adb9)
+
 
 ### STEP2.ファイルの中身を読んでみる
 このステップでは、結局理解できなかったので、読み飛ばしてもらっても大丈夫です！
@@ -98,6 +105,8 @@ activerecord/lib/active_record/migration/ディレクトリ配下のファイル
   - 未実行のマイグレーションが存在するかどうかをチェックするためにDBに接続するためのファイル？
 
 この読み方では流れを理解できないことがわかりました🙅‍♀️
+
+![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/562e39ab-3529-46ce-a743-9c7c42408b4e)
 
 
 ### STEP3. 「schema_migations」で検索してみる
@@ -126,6 +135,9 @@ activerecord/lib/active_record/migration/ディレクトリ配下のファイル
 
 ここからは、とにかくメソッドを辿って辿って読んでいくと、流れを掴むことができました！👏
 
+![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/ea1d5bc2-0b20-465a-8420-248d85576fcc)
+
+
 ### STEP4. マイグレーションされる流れを整理する
 とにかく辿って読む、、辿って読む、、を繰り返していたのですが、
 
@@ -135,7 +147,6 @@ $ rails db:migrate VERSION=20220808075632
 実行後の流れをなんか理解できた気がする！けど、本当に理解できているのか？🤔
 
 となったので、最初のコマンド実行から、schema_migrationテーブルに日付がインサートされる流れを整理してみました。
-
 
 #### db:migrateの実行の流れをまとめる！
 
@@ -197,6 +208,7 @@ Current version: 20220808075632
   end
 ```
 
+
 データベースが複数ある場合、ない場合で分岐されているようで、、
 ```ruby
 ActiveRecord::Tasks::DatabaseTasks.migrate(version)
@@ -238,6 +250,12 @@ migration_connection_pool.migration_context.migrate(target_version) do |migratio
 ```
 によって、データベースに接続したあと、migration_contextメソッドが呼び出され、
 MigrationContextクラスをインスタンス化し、migrateメソッドを呼び出します。
+
+![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/1abb443c-0f45-4254-940d-01dee2e1caa1)
+
+
+
+### STEP5.マイグレーション処理を確認する
 
 MigrationContextクラス
 ```activerecord/lib/active_record/migration.rb
@@ -342,6 +360,8 @@ def execute_migration_in_transaction(migration)
 1. schema_migrationテーブルにタイムスタンプのレコードを追加
 
 の3つの処理が実行される流れを追うことができました👏
+
+![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/a251ffd3-00c9-4c34-ad74-81073962f8a9)
 
 ## まとめ
 実際にActiveRcordの中身を読んでみて、**「OSSも意外に読める！」** ということが分かりました。
