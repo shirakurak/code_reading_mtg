@@ -110,10 +110,8 @@ activerecord/lib/active_recordディレクトリ配下のファイルを見て�
 
 クラスとそのクラスに定義されているメソッドを読むことにしました。
 
-<img width="672" alt="スクリーンショット 0006-04-05 3 01 42" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/fec5da43-87bb-47bc-976c-6498a8bdacce">
+<img width="350" alt="スクリーンショット 0006-04-05 3 01 42" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/fec5da43-87bb-47bc-976c-6498a8bdacce">
 
-
-<img width="746" alt="スクリーンショット 0006-04-01 17 54 18" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/ef42a6d8-db43-4325-ac17-f15ff95549be">
 
 すると、MigrationContextクラスには、upメソッドやdownメソッドなどが定義されており、Migratorクラスのインスタンスメソッドであるmigrateを実行していたので、
 
