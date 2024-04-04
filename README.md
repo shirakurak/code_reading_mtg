@@ -44,12 +44,10 @@ https://github.com/rails/rails
 - activesupport
 - tasks
 
-など、Railsの主要な機能に関するディレクトリがありました！
+など、Railsの主要な機能の名前が並んでいますね。
 
+もう少し細かくツリー構造を確認してみます。
 
-ツリー構造を確認します。  
-
-もう少し細かく見てみます。
 
 <img width="743" alt="スクリーンショット 0006-04-05 2 42 18" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/6c0e24b2-cf36-4ca0-baba-76f2b43f0968">
 
