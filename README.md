@@ -96,6 +96,7 @@ activerecord/lib/active_recordディレクトリ配下のファイルを見て�
 
 
 何はともあれ、検索することから始めます。
+
 リポジトリ内で`.`を押すと、ブラウザ上でVSCode開くことができるので、
 
 そこで、「schema_migations」を検索してみます。
