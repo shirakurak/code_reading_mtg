@@ -1,4 +1,4 @@
-# Ruby on RailsのActiveRecordのコードを読む〜マイグレーションってどんなふうに実装されてるの？〜
+# Ruby on RailsのActiveRecordを読む〜マイグレーションってどんなふうに実装されてるの？〜
 \#冒険
 \#コードを読む会
 
