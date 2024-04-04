@@ -34,9 +34,10 @@ $ rails db:migrate VERSION=20220808075632
 ### STEP1. 全体像の把握
 #### ざっくりディレクトリ構成を見てみる
 
-https://github.com/rails/rails  
+
 ソースコードのツリー構造を確認します。  
 
+https://github.com/rails/rails  
 <img width="2918" alt="スクリーンショット 0006-04-01 9 19 02" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/d364f275-10ec-4332-abff-4d345bd9b8a9">
 
 ソースコードを見るだけでも、いろんな機能があることがわかります。
