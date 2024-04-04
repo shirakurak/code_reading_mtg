@@ -34,13 +34,20 @@ $ rails db:migrate VERSION=20220808075632
 ### STEP1. 全体像の把握
 #### ざっくりディレクトリ構成を見てみる
 
-
 ツリー構造を確認します。  
 
 https://github.com/rails/rails  
-<img width="2918" alt="スクリーンショット 0006-04-01 9 19 02" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/d364f275-10ec-4332-abff-4d345bd9b8a9">
+<img width="800" alt="スクリーンショット 0006-04-01 9 19 02" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/d364f275-10ec-4332-abff-4d345bd9b8a9">
 
-ソースコードを見るだけでも、いろんな機能があることがわかります。
+- actionview
+- activemodel
+- activesupport
+- tasks
+
+など、Railsの主要な機能に関するディレクトリが見受けられます。
+
+<img width="743" alt="スクリーンショット 0006-04-05 2 42 18" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/6c0e24b2-cf36-4ca0-baba-76f2b43f0968">
+
 
 他のディレクトリを見るとRailsの興味深い実装があちらこちらあって、浮気しちゃいそうになりますね😇
 
