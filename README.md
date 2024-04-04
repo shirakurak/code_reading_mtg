@@ -168,7 +168,7 @@ Current version: 20220808075632
 
 データベースを接続するための準備をしています。
 
-それでは、本題のdb:migrateを辿ります。
+それでは、本題のdb:migrateを辿ります。
 activerecord/lib/active_record/railties/databases.rake
 ```activerecord/lib/active_record/railties/databases.rake
   desc "Migrate the database (options: VERSION=x, VERBOSE=false, SCOPE=blog)."
@@ -237,11 +237,11 @@ migration_connection_pool.migration_context.migrate(target_version) do |migratio
 MigrationContextクラスのmigrateメソッドが呼び出されることが分かりました。
 
 
-
 ### STEP5.マイグレーション処理の特定
 
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/a251ffd3-00c9-4c34-ad74-81073962f8a9)
 
+MigrationContextクラスを辿っていきます🫡
 
 activerecord/lib/active_record/migration.rb
 ```activerecord/lib/active_record/migration.rb
@@ -264,17 +264,15 @@ migrateメソッドでは、target_versionによる分岐が行われており�
 
 activerecord/lib/active_record/tasks/database_tasks.rbファイルのtarget_versionメソッドで渡されているENV["VERSION"]、
 
-つまり、コマンドでVERSION指定した日付を使っていることがわかります。
-
-```
-$ rails db:migrate VERSION=20220808075632
-```
+つまり、コマンドで指定した日付（VERSION=20220808075632）を使っているようです。
 
 その後、target_versionによって分岐され、
 同じクラス内のupメソッドやdownメソッドが実行されると、
 
-MigrationContextクラス
+activerecord/lib/active_record/migration.rb
 ```activerecord/lib/active_record/migration.rb
+Class MigrationContext
+  ・・・
     def up(target_version = nil, &block) # :nodoc:
       selected_migrations = if block_given?
         migrations.select(&block)
@@ -285,12 +283,14 @@ MigrationContextクラス
       Migrator.new(:up, selected_migrations, schema_migration, internal_metadata, target_version).migrate
     end
 ```
-&blockによって、マイグレーションするファイルを決定すると、Migratorをインスタンス化して、
+&blockによって、マイグレーションするファイルを決定します。
 
-migrateメソッドを実行します。
+その後、Migratorをインスタンス化して、migrateメソッドを実行します。
 
-Migratorクラス
+activerecord/lib/active_record/migration.rb
 ```activerecord/lib/active_record/migration.rb
+class Migrator
+  ・・・
     def migrate
       if use_advisory_lock?
         with_advisory_lock { migrate_without_lock }
@@ -299,11 +299,17 @@ Migratorクラス
       end
     end
 ```
-マイグレーションの実行中にアドバイザリーロックを使用するかどうかで分岐しています。
-アドバイザリーロックとは、他のプロセスが同時にマイグレーションを実行することを防ぐことができます。
+migrateメソッドでは、マイグレーションの実行中にアドバイザリーロックを使用するかどうかで分岐しています。
+アドバイザリーロックとは、他のプロセスが同時にマイグレーションを実行することを防ぐロックのことです。
 
-アドバイザリーロックがない場合は、
+今回は、マイグレーションの処理を見つけられればよいで、アドバイザリーロックがない場合の
+
+migrate_without_lockメソッドを見ていきます。
+
 ```ruby
+class Migrator
+  ・・・
+    private
       def migrate_without_lock
         if invalid_target?
           raise UnknownMigrationVersionError.new(@target_version)
@@ -313,44 +319,69 @@ Migratorクラス
         runnable.each(&method(:execute_migration_in_transaction))
       end
 ```
-migrate_without_lockが実行され、execute_migration_in_transactionメソッドによって、
-upメソッドやdownメソッドなどによって、テーブルが更新されて、
-schema_migrationsにインサートされていきます。
+migrate_without_lockが実行されると、execute_migration_in_transactionメソッドが最後に実行されていることがわかったので、
+
+最後にこのメソッドを見てみます！
 
 
-Migratorクラス
+activerecord/lib/active_record/migration.rb
 ```activerecord/lib/active_record/migration.rb
-def execute_migration_in_transaction(migration)
-        return if down? && !migrated.include?(migration.version.to_i)
-        return if up?   &&  migrated.include?(migration.version.to_i)
-
-        Base.logger.info "Migrating to #{migration.name} (#{migration.version})" if Base.logger
-
-        ddl_transaction(migration) do
-          migration.migrate(@direction)
-          record_version_state_after_migrating(migration.version)
+Class Migrator
+  ・・・
+    private
+      def execute_migration_in_transaction(migration)
+          return if down? && !migrated.include?(migration.version.to_i)
+          return if up?   &&  migrated.include?(migration.version.to_i)
+  
+          Base.logger.info "Migrating to #{migration.name} (#{migration.version})" if Base.logger
+  
+          ddl_transaction(migration) do
+            migration.migrate(@direction)
+            record_version_state_after_migrating(migration.version)
+          end
+        rescue => e
+          msg = +"An error has occurred, "
+          msg << "this and " if use_transaction?(migration)
+          msg << "all later migrations canceled:\n\n#{e}"
+          raise StandardError, msg, e.backtrace
         end
-      rescue => e
-        msg = +"An error has occurred, "
-        msg << "this and " if use_transaction?(migration)
-        msg << "all later migrations canceled:\n\n#{e}"
-        raise StandardError, msg, e.backtrace
-      end
 ```
+
+upメソッドやdownメソッドなどによって、テーブルが更新され、
+schema_migrationsにインサートされているようです。
 
 この後は、
 ①のmigration_connection_pool.schema_cache.clear!によって、
 変更されたスキーマが正確に反映されます。
-これで、
+
+かなり端折ったところもありますが、
 
 1. schema_migrationテーブルに履歴のない、マイグレーションが実行
 1. db/schema.rbのスキーマファイルを更新
 1. schema_migrationテーブルにタイムスタンプのレコードを追加
 
-の3つの処理が実行される流れを追うことができました👏
+の3つの処理が実行される流れを追うことができました💪
+
+## まとめ
+実際にActiveRcordの中身を読んでみて、**「OSSも意外に読める！」** ということが分かりました。
+
+これまで、「OSSはなんか凄そう...」「きっと魔法のようなコードが書かれているんだろう...」と思っていました。
+
+しかし、実際に読んでみると、普通にプロダクト開発しているコードと同じように、難しいところもあれば、わかりやすいところもありました。
+
+加えて、コード変更した履歴が1ヶ月前にバージョンも更新されている行などもあり、人間味を感じられて面白かったです。
 
 
-## 🕹️勉強会のルール
+**つまり、魔法は使ってなかったのです。**
+
+OSSだからといって、特別視する必要はないと思えたことが一番の収穫だと思っています。
+
+今後は、もっと積極的にOSSの世界に関わっていくことで、技術的な成長だけでなく、世界中の開発者とのつながりも深めていけることを願っています。
+
+OSSの旅は、これからが本当の始まりです🚀
+
+
+## 追記: 社内勉強会のルール
 
 昨年、社内のバックエンドエンジニア数人で、プロダクトのコードを読むという勉強会を実施しており、その中で最終アウトプットとして、リファクタリングを行いました。
 
@@ -386,23 +417,6 @@ OSSのコードを読むとなると、いくらでも深く読んでいけて�
 勉強会最後は、「間に合わせるにはどうやって呼んでいくか？」という発想ができたり、
 「どうにかアウトプットを生み出そう」いう力学が働いたりして良かったです。
 
-## まとめ
-実際にActiveRcordの中身を読んでみて、**「OSSも意外に読める！」** ということが分かりました。
-
-これまで、「OSSはなんか凄そう...」「きっと魔法のようなコードが書かれているんだろう...」と思っていました。
-
-しかし、実際に読んでみると、普通にプロダクト開発しているコードと同じように、難しいところもあれば、わかりやすいところもありました。
-
-加えて、コード変更した履歴が1ヶ月前にバージョンも更新されている行などもあり、人間味を感じられて面白かったです。
-
-
-**つまり、魔法は使ってなかったのです。**
-
-OSSだからといって、特別視する必要はないと思えたことが一番の収穫だと思っています。
-
-今後は、もっと積極的にOSSの世界に関わっていくことで、技術的な成長だけでなく、世界中の開発者とのつながりも深めていけることを願っています。
-
-OSSの旅は、これからが本当の始まりです🧗‍♂️
 
 
 
