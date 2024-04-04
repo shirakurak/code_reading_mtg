@@ -242,8 +242,11 @@ MigrationContextクラスのmigrateメソッドが呼び出されることが分
 
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/a251ffd3-00c9-4c34-ad74-81073962f8a9)
 
-MigrationContextクラス
+
+activerecord/lib/active_record/migration.rb
 ```activerecord/lib/active_record/migration.rb
+Class MigrationContext
+  ・・・
     def migrate(target_version = nil, &block)
       case
       when target_version.nil?
