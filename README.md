@@ -44,7 +44,7 @@ https://github.com/rails/rails
 - activesupport
 - tasks
 
-など、Railsの主要な機能に関するディレクトリが見受けられます。
+など、Railsの主要な機能に関するディレクトリがありました！
 
 
 ツリー構造を確認します。  
