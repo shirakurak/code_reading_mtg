@@ -127,12 +127,7 @@ upメソッドやdownメソッドなどが定義されていたり、migrateメ�
 ### STEP4. Rakeタスクの実行
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/1abb443c-0f45-4254-940d-01dee2e1caa1)
 
-調べたいコマンドは、こちらです。
-
-```ruby
-$ rails db:migrate VERSION=20220808075632
-```
-最初のコマンド実行から、schema_migrationテーブルに日付がインサートされるまでの流れをみていきます。
+コマンド実行から、schema_migrationテーブルに日付がインサートされるまでの流れをみていきます。
 
 #### db:migrateを実行してからの流れを確認する
 
@@ -245,6 +240,8 @@ MigrationContextクラスのmigrateメソッドが呼び出されることが分
 
 ### STEP5.マイグレーション処理の特定
 
+![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/a251ffd3-00c9-4c34-ad74-81073962f8a9)
+
 MigrationContextクラス
 ```activerecord/lib/active_record/migration.rb
     def migrate(target_version = nil, &block)
@@ -348,8 +345,6 @@ def execute_migration_in_transaction(migration)
 1. schema_migrationテーブルにタイムスタンプのレコードを追加
 
 の3つの処理が実行される流れを追うことができました👏
-
-![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/a251ffd3-00c9-4c34-ad74-81073962f8a9)
 
 
 ## 🕹️勉強会のルール
