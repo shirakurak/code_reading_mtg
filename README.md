@@ -2,7 +2,7 @@
 \#冒険
 \#コードを読む会
 
-Active Record Migrations は、Ruby on Rails におけるデータベースのスキーマの管理をする機能です。
+ActiveRecordのMigrations は、Ruby on Rails におけるデータベースのスキーマの管理をする機能です。
 
 Ruby on Railsは多機能なフレームワークですが、コマンドやメソッドを使用する際、「何が起きてるんだろう...？🤔」と不安になることがしばしばあります。
 
