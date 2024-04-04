@@ -321,7 +321,7 @@ class Migrator
 ```
 migrate_without_lockが実行されると、execute_migration_in_transactionメソッドが最後に実行されていることがわかったので、
 
-最後にこのメソッドを見てみます！
+最後にこのメソッドを追います！🚴‍♂️
 
 
 activerecord/lib/active_record/migration.rb
