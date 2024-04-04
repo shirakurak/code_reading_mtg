@@ -83,7 +83,8 @@ https://github.com/rails/rails
 activerecord配下で、マイグレーションしてそうなディレクトリとファイルを発見しました。
 
 <img width="777" alt="スクリーンショット 0006-04-01 17 16 43" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/cfa4e646-6f59-418a-99f5-09803acbf3b3">
-![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/f9f120e7-922c-4d76-a150-bd1f4641adb9)
+
+![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/a495fd7d-ad00-4203-a6ba-b6e2797e0c4b)
 
 
 ### STEP2.ファイルの中身を読んでみる
@@ -106,15 +107,16 @@ activerecord/lib/active_record/migration/ディレクトリ配下のファイル
 
 この読み方では流れを理解できないことがわかりました🙅‍♀️
 
-![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/562e39ab-3529-46ce-a743-9c7c42408b4e)
+![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/d4e0288a-982f-4140-a4b1-518c9a844a20)
 
 
-### STEP3. 「schema_migations」で検索してみる
+
+### STEP3. キーワード検索
 
 何はともあれ、検索することから始めます。
 ソースコードのページで`.`を押すと、ブラウザ上でVSCode開くことができるので、
 
-そこで、検索をしてみます。
+そこで、「schema_migations」を検索してみます。
 
 「schema_migations」で検索。
 
@@ -138,7 +140,7 @@ activerecord/lib/active_record/migration/ディレクトリ配下のファイル
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/ea1d5bc2-0b20-465a-8420-248d85576fcc)
 
 
-### STEP4. マイグレーションされる流れを整理する
+### STEP4. Rakeタスクの実行
 とにかく辿って読む、、辿って読む、、を繰り返していたのですが、
 
 ```ruby
@@ -255,7 +257,7 @@ MigrationContextクラスをインスタンス化し、migrateメソッドを呼
 
 
 
-### STEP5.マイグレーション処理を確認する
+### STEP5.マイグレーション処理の特定
 
 MigrationContextクラス
 ```activerecord/lib/active_record/migration.rb
