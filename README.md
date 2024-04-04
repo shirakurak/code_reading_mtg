@@ -101,8 +101,6 @@ activerecord/lib/active_recordディレクトリ配下のファイルを見て�
 
 そこで、「schema_migations」を検索してみます。
 
-「schema_migations」で検索。
-
 <img width="1290" alt="スクリーンショット 0006-04-01 17 45 19" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/54f66632-863f-4005-a8e2-de4c6a2a91f1">
 
 
