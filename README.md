@@ -112,26 +112,29 @@ activerecord/lib/active_recordディレクトリ配下のファイルを見て�
 
 <img width="350" alt="スクリーンショット 0006-04-05 3 01 42" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/fec5da43-87bb-47bc-976c-6498a8bdacce">
 
+各クラスを確認すると、
 
-すると、MigrationContextクラスには、upメソッドやdownメソッドなどが定義されており、Migratorクラスのインスタンスメソッドであるmigrateを実行していたので、
+upメソッドやdownメソッドなどが定義されていたり、migrateメソッドを実行したりしていたMigrationContextクラスに
 
-間違いなく、ここでup、downのマイグレーションを行っていることがわかりました。
+でマイグレーション系の処理を行っていそうということが分かりました。
 
-ここからは、とにかくメソッドを辿って辿って読んでいくと、流れを掴むことができました！👏
+その後、メソッドを検索して辿って読んでいくと、
 
+`activerecord/lib/active_record/railties/databases.rake`のファイルで、
 
+実行したコマンドに関するタスクが実行されていることが分かりました👏
 
 ### STEP4. Rakeタスクの実行
-とにかく辿って読む、、辿って読む、、を繰り返していたのですが、
+![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/1abb443c-0f45-4254-940d-01dee2e1caa1)
+
+調べたいコマンドは、こちらです。
 
 ```ruby
 $ rails db:migrate VERSION=20220808075632
 ```
-実行後の流れをなんか理解できた気がする！けど、本当に理解できているのか？🤔
+最初のコマンド実行から、schema_migrationテーブルに日付がインサートされるまでの流れをみていきます。
 
-となったので、最初のコマンド実行から、schema_migrationテーブルに日付がインサートされる流れを整理してみました。
-
-#### db:migrateの実行の流れをまとめる！
+#### db:migrateを実行してからの流れを確認する
 
 ```ruby
 $ rails db:migrate VERSION=20220808075632
@@ -139,13 +142,16 @@ $ rails db:migrate VERSION=20220808075632
 
 が実行されると、
 
-activerecord/lib/active_record/railties/databases.rakeファイルの
-namespaceで定義されたdb:migrateのRakeタスクが実行されます。
+`activerecord/lib/active_record/railties/databases.rake`ファイル中で定義されている
 
-migrateだけでなく、status、rollback、versionなど、見たことがあるコマンドも拝見されます。
+db:migrateのRakeタスクが走ることが分かりました。
 
-確認のため、versionのタスクについては、putsで出力している箇所を確認してみました。
-```ruby
+migrateだけでなく、status、rollback、versionなど、見たことがあるコマンドたちも見つかりました🌝
+
+確認のため、versionのタスクについてputsの文字列が出力されるかみてみました。
+
+activerecord/lib/active_record/railties/databases.rake
+```activerecord/lib/active_record/railties/databases.rake
   desc "Retrieve the current schema version number"
   task version: :load_config do
     ActiveRecord::Tasks::DatabaseTasks.with_temporary_pool_for_each(env: Rails.env) do |pool|
@@ -161,14 +167,15 @@ $ rails db:version
 Running via Spring preloader in process 26
 Current version: 20220808075632
 ```
-ちゃんと書かれていることが確認できました！
+ちゃんと書かれていることが確認できました！🙌
 
-ちなみに、:load_configは、config/database.ymlファイルのデータベース設定を読み込んで、
+ちなみに、:load_configは、`config/database.yml`ファイルのデータベース設定を読み込んで、
 
-タスク実行でデータベースを接続する準備をしているようです。
+データベースを接続するための準備をしています。
 
-それでは、migrateを辿ります。
-```ruby
+それでは、本題のdb:migrateを辿ります。
+activerecord/lib/active_record/railties/databases.rake
+```activerecord/lib/active_record/railties/databases.rake
   desc "Migrate the database (options: VERSION=x, VERBOSE=false, SCOPE=blog)."
   task migrate: :load_config do
     db_configs = ActiveRecord::Base.configurations.configs_for(env_name: ActiveRecord::Tasks::DatabaseTasks.env)
@@ -191,17 +198,17 @@ Current version: 20220808075632
   end
 ```
 
+データベースが複数ある場合、ない場合で分岐されているようです。
 
-データベースが複数ある場合、ない場合で分岐されているようで、、
 ```ruby
 ActiveRecord::Tasks::DatabaseTasks.migrate(version)
 ```
-ここでマイグレーションしていることには違いなさそうです。
+ここでmigrateメソッドを実行しています！
 
-versionsはソートされていることも確認できますね。
+この時、versionsはソートされていることも確認できますね。
 
-activerecord/lib/active_record/tasks/database_tasks.rb
-を確認します。
+では、DatabaseTasksクラスが定義されている所を見ていきましょう。
+
 activerecord/lib/active_record/tasks/database_tasks.rb ー①
 ```activerecord/lib/active_record/tasks/database_tasks.rb
       def migrate(version = nil)
@@ -226,15 +233,13 @@ activerecord/lib/active_record/tasks/database_tasks.rb ー①
       end
 ```
 
-そして、
+
 ```ruby
 migration_connection_pool.migration_context.migrate(target_version) do |migration|
 ...
 ```
 によって、データベースに接続したあと、migration_contextメソッドが呼び出され、
-MigrationContextクラスをインスタンス化し、migrateメソッドを呼び出します。
-
-![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/1abb443c-0f45-4254-940d-01dee2e1caa1)
+MigrationContextクラスのmigrateメソッドが呼び出されることが分かりました。
 
 
 
