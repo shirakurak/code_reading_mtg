@@ -104,11 +104,11 @@ activerecord/lib/active_recordディレクトリ配下のファイルを見て�
 <img width="1290" alt="スクリーンショット 0006-04-01 17 45 19" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/54f66632-863f-4005-a8e2-de4c6a2a91f1">
 
 
-すると、いくつかファイルがヒットしたのですが、ヒットしたファイルの中で、`activerecord/lib/active_record/migration.rb`
+すると、いくつかファイルがヒットし、ヒットしたファイルの中には、
 
-のファイルには、MigrationErrorクラスやMigrationContextクラス、Migratorクラスなどがあったので、
+怪しそうだった`activerecord/lib/active_record/migration.rb`のファイルが！👏
 
-クラスとそのクラスに定義されているメソッドを読んでいきました。
+クラスとそのクラスに定義されているメソッドを読むことにしました。
 
 <img width="672" alt="スクリーンショット 0006-04-05 3 01 42" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/fec5da43-87bb-47bc-976c-6498a8bdacce">
 
