@@ -46,6 +46,8 @@ https://github.com/rails/rails
 
 など、Railsの主要な機能に関するディレクトリが見受けられます。
 
+もう少し細かく見てみます。
+
 <img width="743" alt="スクリーンショット 0006-04-05 2 42 18" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/6c0e24b2-cf36-4ca0-baba-76f2b43f0968">
 
 
