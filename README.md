@@ -95,7 +95,7 @@ activerecord/lib/active_recordディレクトリ配下のファイルを見て�
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/ea1d5bc2-0b20-465a-8420-248d85576fcc)
 
 
-何はともあれ、検索することから始めます。
+「主要なワードで全検索してみたらいんじゃない？」という話になったので、検索してみることにしました。
 
 リポジトリ内で`.`を押すと、ブラウザ上でVSCode開くことができるので、
 
