@@ -32,6 +32,8 @@ $ rails db:migrate VERSION=20220808075632
 ## 🧗‍♀️冒険内容
 
 ### STEP1. 全体像の把握
+![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/a495fd7d-ad00-4203-a6ba-b6e2797e0c4b)
+
 #### ざっくりディレクトリ構成を見てみる
 
 GitHubに公開されているので、こちらのリンクからRailsのリポジトリを確認します。
@@ -55,10 +57,9 @@ activerecord配下で、マイグレーションしてそうなディレクト�
 <img width="777" alt="スクリーンショット 0006-04-01 17 16 43" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/cfa4e646-6f59-418a-99f5-09803acbf3b3">
 
 
-![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/a495fd7d-ad00-4203-a6ba-b6e2797e0c4b)
-
-
 ### STEP2.ファイルの中身を確認
+![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/d4e0288a-982f-4140-a4b1-518c9a844a20)
+
 
 activerecord/lib/active_recordディレクトリ配下のファイルを見てみます。
 
@@ -87,11 +88,12 @@ activerecord/lib/active_recordディレクトリ配下のファイルを見て�
 どうやらこれは怪しそうだ。。👀
 
 
-![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/d4e0288a-982f-4140-a4b1-518c9a844a20)
-
 
 
 ### STEP3. キーワード検索
+
+![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/ea1d5bc2-0b20-465a-8420-248d85576fcc)
+
 
 何はともあれ、検索することから始めます。
 リポジトリ内で`.`を押すと、ブラウザ上でVSCode開くことができるので、
@@ -117,7 +119,6 @@ activerecord/lib/active_recordディレクトリ配下のファイルを見て�
 
 ここからは、とにかくメソッドを辿って辿って読んでいくと、流れを掴むことができました！👏
 
-![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/ea1d5bc2-0b20-465a-8420-248d85576fcc)
 
 
 ### STEP4. Rakeタスクの実行
