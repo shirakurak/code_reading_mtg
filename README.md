@@ -80,6 +80,8 @@ activerecord/lib/active_recordディレクトリ配下のファイルを見て�
 - pending_migration_connection.rb
   - 未実行のマイグレーションが存在するかどうかをチェックするためにDBに接続するためのファイル？
 
+ここを読むだけでは分からないことが分かりました🙅‍♂️
+
 #### migration.rbを見てみる
 - Error系のクラス
 - Migrationクラス
