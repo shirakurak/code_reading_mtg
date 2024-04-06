@@ -26,7 +26,7 @@
 
 マイグレーションにも複数の機能がありますが、今回は、対象を絞り、以下のコマンドの流れを（ふんわりとでも）理解することを目標としました。
 
-```ruby
+```sh
 $ rails db:migrate VERSION=20220808075632
 ```
 
@@ -43,21 +43,19 @@ $ rails db:migrate VERSION=20220808075632
 
 #### ざっくりディレクトリ構成を見てみる
 
-GitHubに公開されているので、こちらのリンクからRailsのリポジトリを確認します。
-
-https://github.com/rails/rails  
+[こちら](https://github.com/rails/rails)から確認します。
+ 
 <img width="800" alt="スクリーンショット 0006-04-01 9 19 02" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/d364f275-10ec-4332-abff-4d345bd9b8a9">
 
-- actionview
-- activemodel
-- activesupport
-- tasks
+- Action View
+- Active Model
+- Active Support
 
-など、Railsの主要な機能の名前が並んでいますね。
+など、Rails の主要な機能の名前が並んでいますね。
 
 他のディレクトリを見るとRailsの興味深い実装があちらこちらあって、浮気しちゃいそうになります😇
 
-その気持ちをグッと堪えて、activerecordを見ていきます。
+その気持ちをグッと堪えて、activerecord ディレクトリを見ていきます。
 
 activerecord配下で、マイグレーションしてそうなディレクトリとファイルを発見しました。
 
@@ -65,12 +63,13 @@ activerecord配下で、マイグレーションしてそうなディレクト�
 
 
 ### STEP2.ファイルの中身を確認
-![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/d4e0288a-982f-4140-a4b1-518c9a844a20)
 
+![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/d4e0288a-982f-4140-a4b1-518c9a844a20)
 
 activerecord/lib/active_recordディレクトリ配下のファイルを見てみます。
 
 #### migration/を見てみる
+
 - command_recorder.rb
   - マイグレーション中に行われたコマンドを記録し、それらを逆転させられるようにするファイル？
 - compatibility.rb
@@ -87,6 +86,7 @@ activerecord/lib/active_recordディレクトリ配下のファイルを見て�
 ここを読むだけでは分からないことが分かりました🙅‍♂️
 
 #### migration.rbを見てみる
+
 - Error系のクラス
 - Migrationクラス
 - MigrationContextクラス
@@ -94,13 +94,9 @@ activerecord/lib/active_recordディレクトリ配下のファイルを見て�
 
 どうやらこれは怪しそうだ。。👀
 
-
-
-
 ### STEP3. キーワード検索
 
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/ea1d5bc2-0b20-465a-8420-248d85576fcc)
-
 
 「主要なワードで全検索してみたらいんじゃない？」という話になったので、検索してみることにしました。
 
@@ -109,7 +105,6 @@ activerecord/lib/active_recordディレクトリ配下のファイルを見て�
 そこで、「schema_migations」を検索してみます。
 
 <img width="1290" alt="スクリーンショット 0006-04-01 17 45 19" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/54f66632-863f-4005-a8e2-de4c6a2a91f1">
-
 
 すると、いくつかファイルがヒットし、ヒットしたファイルの中には、
 
@@ -242,7 +237,6 @@ migration_connection_pool.migration_context.migrate(target_version) do |migratio
 ```
 によって、データベースに接続したあと、migration_contextメソッドが呼び出され、
 MigrationContextクラスのmigrateメソッドが呼び出されることが分かりました。
-
 
 ### STEP5.マイグレーション処理の特定
 
@@ -387,7 +381,6 @@ OSSだからといって、特別視する必要はないと思えたことが�
 
 OSSの旅は、これからが本当の始まりです🚀
 
-
 ## 追記: 社内勉強会のルール
 
 昨年、社内のバックエンドエンジニア数人で、プロダクトのコードを読むという勉強会を実施しており、その中で最終アウトプットとして、リファクタリングを行いました。
@@ -423,236 +416,3 @@ OSSのコードを読むとなると、いくらでも深く読んでいけて�
 集中して、最後は達成感を味わいたい！ということから、定めたのですが、
 勉強会最後は、「間に合わせるにはどうやって呼んでいくか？」という発想ができたり、
 「どうにかアウトプットを生み出そう」いう力学が働いたりして良かったです。
-
-
-
-
-
-
-
-
-
-
-
-
-
-
---- 
-📝メモ
-
-
-activerecord/lib/active_record/connection_adapters/abstract/connection_pool.rb
-にある、
-
-https://github.dev/rails/rails/blob/9e01d93547e2082e2e88472748baa0f9ea63c181/activerecord/lib/active_record/railties/databases.rake#L181
-
-desc 'Run the "up" for a given migration VERSION.'
-task up: :load_config do
-  ActiveRecord::Tasks::DatabaseTasks.raise_for_multi_db(command: "db:migrate:up")
-
-  raise "VERSION is required" if !ENV["VERSION"] || ENV["VERSION"].empty?
-
-  ActiveRecord::Tasks::DatabaseTasks.check_target_version
-
-  ActiveRecord::Tasks::DatabaseTasks.migration_connection.migration_context.run(
-    :up,
-    ActiveRecord::Tasks::DatabaseTasks.target_version
-  )
-  db_namespace["_dump"].invoke
-end
-
-
-
-load_config
-
-https://github.com/rails/rails/blob/9e01d93547e2082e2e88472748baa0f9ea63c181/activerecord/lib/active_record/railties/databases.rake#L11-L28 
-
-
-
-参考：  
-
-📝メモ
-
-    def self.valid_version_format?(version_string) # :nodoc:
-      [
-        MigrationFilenameRegexp,
-        /\A\d(_?\d)*\z/ # integer with optional underscores
-      ].any? { |pattern| pattern.match?(version_string) }
-    end
-
-versionにも _入れて良いぽい！という発見
-
-
-
-次回： activerecord/lib/active_record/railties/databases.rake:189
-
-おそらくupが実際に実行されているところを見る！
-
-      ActiveRecord::Tasks::DatabaseTasks.migration_connection_pool.migration_context.run(
-        :up,
-        ActiveRecord::Tasks::DatabaseTasks.target_version
-      )
-
-
-
-ActiveRecord::Tasks::DatabaseTasks.check_target_version
-
-それは、これ：　https://github.dev/rails/rails/blob/9e01d93547e2082e2e88472748baa0f9ea63c181/activerecord/lib/active_record/tasks/database_tasks.rb#L290
-
-      def check_target_version
-        if target_version && !Migration.valid_version_format?(ENV["VERSION"])
-          raise "Invalid format of target version: `VERSION=#{ENV['VERSION']}`"
-        end
-      end
-
-
-
-      ActiveRecord::Tasks::DatabaseTasks.migration_connection.migration_context.run(
-        :up,
-        ActiveRecord::Tasks::DatabaseTasks.target_version
-      )
-
- 定義は以下：
-
-      def migration_connection # :nodoc:
-        migration_class.connection
-      end
-
-
-
-ActiveRecord::Tasks::DatabaseTasks.migration_connection.migration_contextは、以下？
-
-https://github.dev/rails/rails/blob/9e01d93547e2082e2e88472748baa0f9ea63c181/activerecord/lib/active_record/connection_adapters/abstract_adapter.rb#L249
-
-      def migration_context # :nodoc:
-        MigrationContext.new(migrations_paths, schema_migration, internal_metadata)
-      end
-
-
-
-https://github.com/rails/rails/blob/9e01d93547e2082e2e88472748baa0f9ea63c181/activerecord/lib/active_record/migration.rb#L1221 
-
-   def run(direction, target_version) # :nodoc:
-      Migrator.new(direction, migrations, schema_migration, internal_metadata, target_version).run
-    end
-
-
-
-https://github.com/rails/rails/blob/9e01d93547e2082e2e88472748baa0f9ea63c181/activerecord/lib/active_record/migration.rb#L1471 
-
-
-
-ここを読んでいく
-
-↓
-
-ActiveRecord::Migration.copy(destination, railties,
-                                    on_skip: on_skip, on_copy: on_copy)
-
-https://github.com/rails/rails/blob/9e01d93547e2082e2e88472748baa0f9ea63c181/activerecord/lib/active_record/railties/databases.rake#L637 
-
-activerecord/lib/active_record/railties/databases.rake
-
-task：コマンドに存在しそう？（ db:migrate:prepare など）
-
-namespace：存在しなさそう？
-
-参考：https://docs.google.com/spreadsheets/d/1xDpbBz5ww9_OUMcfLElCvNcKiElpR2IEu3lygbe2Jog/edit#gid=0 
-
-
-
-↓
-
-copy
-
-↓
-
-MigrationContext.migrate
-
-https://github.com/rails/rails/blob/1f6cef4ca546b3a9f7aa12c0f10c7d1d1cfbab5a/activerecord/lib/active_record/migration.rb#L1230 
-
-↓
-
-MigrationContext.up または down
-
-https://github.com/rails/rails/blob/9e01d93547e2082e2e88472748baa0f9ea63c181/activerecord/lib/active_record/migration.rb#L1293 
-
-↓
-
-Migrator.migrate
-
-https://github.com/rails/rails/blob/9e01d93547e2082e2e88472748baa0f9ea63c181/activerecord/lib/active_record/migration.rb#L1479 
-
-↓
-
-ロックする
-
-Migrator.migrate_without_lock
-または
-Migrator.run_without_lock
-
-↓
-
-ここでmigration実行！
-
-sheme_migrationsの更新もここでしてる
-
-Migrator.execute_migration_in_transaction
-
-https://github.com/rails/rails/blob/1f6cef4ca546b3a9f7aa12c0f10c7d1d1cfbab5a/activerecord/lib/active_record/migration.rb#L1525 
-
-
-
-migration.rbの全体構成
-
-エラー系
-
-MigrationError < ActiveRecordError
-
-IrreversibleMigration < MigrationError
-
-DuplicateMigrationVersionError < MigrationError
-
-DuplicateMigrationNameError < MigrationError
-
-UnknownMigrationVersionError < MigrationError
-
-IllegalMigrationNameError < MigrationError
-
-InvalidMigrationTimestampError < MigrationError
-
-PendingMigrationError < MigrationError
-
-ConcurrentMigrationError < MigrationError
-
-NoEnvironmentInSchemaError < MigrationError
-
-ProtectedEnvironmentError < ActiveRecordError
-
-EnvironmentMismatchError < ActiveRecordError
-
-EnvironmentStorageError < ActiveRecordError
-
-Migration
-MigrationProxy
-MigrationContext
-
-migrate
-
-up/down
-
-Migrator
-
-migrate
-
-run
-
-migrate_without_lock（private）
-
-run_without_lock（private）
-
-execute_migration_in_transaction（private）
-
-record_version_state_after_migrating（private）
-
----
