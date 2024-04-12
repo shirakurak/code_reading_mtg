@@ -17,7 +17,7 @@
 日々、Ruby on Rails を使用していると、（その多機能さゆえ）「内部で何が起きてるんだろう...？🤔」と不安になることがよくありました。
 その不安を解消しつつ、信頼性の高い情報源を読めるようになりたい！と思い、OSSを読む社内勉強会を実施することになりました。
 
-今回は、Ruby on Rails の中でもデータベースのスキーマを管理することができる Migrations を対象としました。
+何を読んでいくか考えた末、Ruby on Rails の中でもデータベースのスキーマを管理することができる Migrations を対象としました。
 いろいろ難しく、完全に理解したとはとても言えないですが、どのようにOSSを冒険していったかを共有できたらと思います。
 
 ## 🧚 想定読者
@@ -33,24 +33,26 @@
 マイグレーションにも複数の機能がありますが、今回は、対象を絞り、以下のコマンドの流れを（ふんわりとでも）理解することを目標としました。
 
 ```sh
-$ rails db:migrate VERSION=20220808075632
+rails db:migrate VERSION=20220808075632
 ```
 
-上記のコマンドでは、以下の処理が実行されます：
+本コマンドは、特定のバージョン番号に対応するマイグレーションをターゲットとし、データベースマイグレーションを実行します。マイグレーションファイルに記載されたデータベースのテーブルを作成、変更、削除することになりますが、他にも
 
-1. schema_migration テーブルに履歴のない、マイグレーションが実行
-1. db/schema.rb のスキーマファイルを更新
-1. schema_migration テーブルにタイムスタンプのレコードを追加
+- db/schema.rb のスキーマファイルを更新
+- schema_migration テーブルにタイムスタンプのレコードを追加
+
+などの処理が行われます。これらを含め、処理を見ていこうと考えました。
 
 ## 🧗‍♀️ 冒険内容
 
 ### STEP1. 全体像の把握
+
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/a495fd7d-ad00-4203-a6ba-b6e2797e0c4b)
 
 #### ざっくりディレクトリ構成を見てみる
 
 [こちら](https://github.com/rails/rails)から確認します。
- 
+
 <img width="800" alt="スクリーンショット 0006-04-01 9 19 02" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/d364f275-10ec-4332-abff-4d345bd9b8a9">
 
 - Action View
@@ -58,12 +60,11 @@ $ rails db:migrate VERSION=20220808075632
 - Active Support
 
 など、Rails の主要な機能（に対応するディレクトリ）の名前が並んでいますね。
-
 他のディレクトリを見るとRailsの興味深い実装があちらこちらあって、浮気しちゃいそうになります😇
 
 その気持ちをグッと堪えて、activerecord ディレクトリを見ていきます。
 
-activerecord配下で、マイグレーションしてそうなディレクトリとファイルを発見しました。
+`activerecord` 配下で、マイグレーションしてそうなディレクトリとファイルを発見しました。
 
 <img width="777" alt="スクリーンショット 0006-04-01 17 16 43" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/cfa4e646-6f59-418a-99f5-09803acbf3b3">
 
@@ -71,30 +72,28 @@ activerecord配下で、マイグレーションしてそうなディレクト�
 
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/d4e0288a-982f-4140-a4b1-518c9a844a20)
 
-activerecord/lib/active_record ディレクトリ配下のファイルを見てみます。
-
 #### migration/を見てみる
 
-そのまま migration というディレクトリを発見しました。ここ読めばいいんじゃね？と短絡的に考え、ざっと中身を見てみます。
+まずどこから読めばいいかさっぱりだったので、それっぽいディレクト名を探して読んでいこうと考えました。 `activerecord/lib/active_record` ディレクトリ配下に `migration` というディレクトリを発見しました。ここ読めばいいんじゃね？と短絡的に考え、ざっと中身を見てみます。
 
-- command_recorder.rb
-  - マイグレーション中に行われたコマンドを記録し、それらを逆転させられるようにするファイル？
-- compatibility.rb
-  - Railsのバージョンが違う場合でもマイグレーションできるようにするファイル？
-- default_strategy.rb
-  -  マイグレーション実行のためのデフォルトのファイル？
-- execution_strategy.rb
-  - 異なるマイグレーションを実行するときに使うファイル？
-- join_table.rb
-  - joinテーブルの作成や削除をサポートするヘルパーメソッドを提供するファイル？
-- pending_migration_connection.rb
-  - 未実行のマイグレーションが存在するかどうかをチェックするためにDBに接続するためのファイル？
+- `command_recorder.rb`
+  - マイグレーション中に行われたコマンドを記録し、それらを逆転させられる（マイグレーションのrevert）ようにする処理が書かれている？
+- `compatibility.rb`
+  - Railsのバージョンが違う場合でもマイグレーションできるようにする（後方互換性？）処理が書かれている？
+- `default_strategy.rb`
+  - マイグレーション実行のための抽象クラスの役割を持っている？
+- `execution_strategy.rb`
+  - 異なるマイグレーションを実行するときの処理が書かれている？
+- `join_table.rb`
+  - joinテーブル（中間テーブル）の名前のための処理が書かれている？
+- `pending_migration_connection.rb`
+  - 一時的なデータベース接続プールを作成するための機能を提供するための処理が書かれている？
 
 うーん、マイグレーションに関係するどこか処理ではありそうですが、本来の目的はここを読むだけでは達成できなそうです🙅‍♂️
 
-#### migration.rbを見てみる
+#### `migration.rb` を見てみる
 
-他のディレクトリは何かあるかなぁとみていくと、 migration.rb というファイルを見つけました。
+他のディレクトリは何かあるかなぁとみていくと、 `migration.rb` というファイルを見つけました。中身はざっとこういう構成です：
 
 - Error系のクラス
 - Migrationクラス
@@ -107,7 +106,7 @@ activerecord/lib/active_record ディレクトリ配下のファイルを見て�
 
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/ea1d5bc2-0b20-465a-8420-248d85576fcc)
 
-（最初からそうした方が早かった？と思いつつ）「主要なワードで全検索してみたらいんじゃない？」という話になったので、検索してみることにしました。
+「主要なワードで全検索してみたらいんじゃない？」という話になった（最初からそうした方が早かったやん...と思いつつ）ので、検索してみることにしました。
 
 リポジトリ内で`.`を押すと、ブラウザ上でVSCode開くことができるので、そこで、「schema_migations」を検索してみます。
 
@@ -127,9 +126,7 @@ upメソッドやdownメソッドなどが定義されていたり、migrateメ�
 
 その後、メソッドを検索して辿って読んでいくと、
 
-`activerecord/lib/active_record/railties/databases.rake`のファイルで、
-
-実行したコマンドに関するタスクが実行されていることが分かりました👏
+`activerecord/lib/active_record/railties/databases.rake` のファイルで、実行したコマンドに関するタスクが実行されていることが分かりました👏
 
 ### STEP4. Rakeタスクの実行
 
