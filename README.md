@@ -38,8 +38,8 @@ rails db:migrate VERSION=20220808075632
 
 本コマンドは、特定のバージョン番号に対応するマイグレーションをターゲットとし、データベースマイグレーションを実行します。マイグレーションファイルに記載されたデータベースのテーブルを作成、変更、削除することになりますが、他にも
 
-- db/schema.rb のスキーマファイルを更新
-- schema_migration テーブルにタイムスタンプのレコードを追加
+- `db/schema.rb` のスキーマファイルを更新
+- `schema_migration` テーブルにタイムスタンプのレコードを追加
 
 などの処理が行われます。これらを含め、処理を見ていこうと考えました。
 
@@ -89,7 +89,7 @@ rails db:migrate VERSION=20220808075632
 - `pending_migration_connection.rb`
   - 一時的なデータベース接続プールを作成するための機能を提供するための処理が書かれている？
 
-うーん、マイグレーションに関係するどこか処理ではありそうですが、本来の目的はここを読むだけでは達成できなそうです🙅‍♂️
+うーん、マイグレーションに関係するどこか処理ではありそうですが、本来の目的はここを読むだけでは達成できなそうです🙅‍♂️（というかようわからん）
 
 #### `migration.rb` を見てみる
 
@@ -112,41 +112,35 @@ rails db:migrate VERSION=20220808075632
 
 <img width="1290" alt="スクリーンショット 0006-04-01 17 45 19" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/54f66632-863f-4005-a8e2-de4c6a2a91f1">
 
-すると、いくつかファイルがヒットし、ヒットしたファイルの中には、
-
-怪しそうだった`activerecord/lib/active_record/migration.rb`のファイルが！👏
+すると、いくつかファイルがヒットし、ヒットしたファイルの中には、怪しそうだった`activerecord/lib/active_record/migration.rb`のファイルが！👏
 
 クラスとそのクラスに定義されているメソッドを読むことにしました。
 
 <img width="450" alt="スクリーンショット 0006-04-05 3 01 42" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/fec5da43-87bb-47bc-976c-6498a8bdacce">
 
-各クラスを確認すると、
+各クラスを確認すると、upメソッドやdownメソッドなどが定義されていたり、migrateメソッドを実行したりしていたMigrationContextクラスにマイグレーション系の処理を行っていそうということが分かりました。マイグレーションっぽい...！
 
-upメソッドやdownメソッドなどが定義されていたり、migrateメソッドを実行したりしていたMigrationContextクラスにマイグレーション系の処理を行っていそうということが分かりました。
-
-その後、メソッドを検索して辿って読んでいくと、
-
-`activerecord/lib/active_record/railties/databases.rake` のファイルで、実行したコマンドに関するタスクが実行されていることが分かりました👏
+その後、メソッドを検索して辿って読んでいくと、`activerecord/lib/active_record/railties/databases.rake` のファイルで、実行したコマンドに関するタスクが実行されていることが分かりました👏
 
 ### STEP4. Rakeタスクの実行
 
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/1abb443c-0f45-4254-940d-01dee2e1caa1)
 
-コマンド実行から、schema_migrationテーブルに日付がインサートされるまでの流れをみていきます。
+改めてコマンド実行から、`schema_migration` テーブルに日付がインサートされるまでの流れをみていきます。
 
 #### db:migrateを実行してからの流れを確認する
 
 ```ruby
-$ rails db:migrate VERSION=20220808075632
+rails db:migrate VERSION=20220808075632
 ```
 
-が実行されると、`activerecord/lib/active_record/railties/databases.rake`ファイル中で定義されているdb:migrateのRakeタスクが走ることが分かりました。
+が実行されると、`activerecord/lib/active_record/railties/databases.rake`ファイル中で定義されている `db:migrate` のRakeタスクが走ることが分かりました。
 
 migrateだけでなく、status、rollback、versionなど、見たことがあるコマンドたちも見つかりました🌝
 
 確認のため、versionのタスクについてputsの文字列が出力されるかみてみました。
 
-activerecord/lib/active_record/railties/databases.rake
+`activerecord/lib/active_record/railties/databases.rake`
 
 ```activerecord/lib/active_record/railties/databases.rake
   desc "Retrieve the current schema version number"
@@ -169,9 +163,9 @@ Current version: 20220808075632
 
 ちなみに、:load_configは、`config/database.yml`ファイルのデータベース設定を読み込んで、データベースを接続するための準備をしています。
 
-それでは、本題のdb:migrateを辿ります。
+それでは、本題の `db:migrate` を辿ります。
 
-activerecord/lib/active_record/railties/databases.rake
+`activerecord/lib/active_record/railties/databases.rake`
 
 ```activerecord/lib/active_record/railties/databases.rake
   desc "Migrate the database (options: VERSION=x, VERBOSE=false, SCOPE=blog)."
@@ -201,13 +195,14 @@ activerecord/lib/active_record/railties/databases.rake
 ```sh
 ActiveRecord::Tasks::DatabaseTasks.migrate(version)
 ```
+
 ここでmigrateメソッドを実行しています！
 
 この時、versionsはソートされていることも確認できますね。
 
 では、DatabaseTasksクラスが定義されている所を見ていきましょう。
 
-activerecord/lib/active_record/tasks/database_tasks.rb ー①
+`activerecord/lib/active_record/tasks/database_tasks.rb` ー①
 
 ```activerecord/lib/active_record/tasks/database_tasks.rb
       def migrate(version = nil)
@@ -270,7 +265,7 @@ migrateメソッドでは、target_versionによる分岐が行われており�
 
 その後、target_versionによって分岐され、同じクラス内のupメソッドやdownメソッドが実行されると、
 
-activerecord/lib/active_record/migration.rb
+`activerecord/lib/active_record/migration.rb`
 
 ```activerecord/lib/active_record/migration.rb
 Class MigrationContext
@@ -290,7 +285,7 @@ Class MigrationContext
 
 その後、Migratorをインスタンス化して、migrateメソッドを実行します。
 
-activerecord/lib/active_record/migration.rb
+`activerecord/lib/active_record/migration.rb`
 
 ```activerecord/lib/active_record/migration.rb
 class Migrator
@@ -327,7 +322,7 @@ migrate_without_lockが実行されると、execute_migration_in_transactionメ�
 
 最後にこのメソッドを追います！🚴‍♂️
 
-activerecord/lib/active_record/migration.rb
+`activerecord/lib/active_record/migration.rb`
 
 ```activerecord/lib/active_record/migration.rb
 Class Migrator
@@ -364,29 +359,25 @@ upメソッドやdownメソッドなどによって、テーブルが更新さ�
 の3つの処理が実行される流れを追うことができました💪
 
 ## まとめ
-実際にActiveRcordの中身を読んでみて、**「OSSも意外に読める！」** ということが分かりました。
 
-これまで、「OSSはなんか凄そう...」「きっと魔法のようなコードが書かれているんだろう...」と思っていました。
-
-しかし、実際に読んでみると、普通にプロダクト開発しているコードと同じように、難しいところもあれば、わかりやすいところもありました。
+実際にActiveRcordの中身を読んでみて、**OSSも意外に読める！** ということが分かりました。「OSSはなんか凄そう...」「きっと魔法のようなコードが書かれているんだろう...」と思っていましたが、実際に読んでみると、普通にプロダクト開発しているコードと同じように、難しいところもあれば、わかりやすいところもありました。
 
 加えて、コード変更した履歴が1ヶ月前にバージョンも更新されている行などもあり、人間味を感じられて面白かったです。
 
 **つまり、魔法は使ってなかったのです。**
 
 OSSだからといって、特別視する必要はないと思えたことが一番の収穫だと思っています。
-
 今後は、もっと積極的にOSSの世界に関わっていくことで、技術的な成長だけでなく、世界中の開発者とのつながりも深めていけることを願っています。
 
 OSSの旅は、これからが本当の始まりです🚀
 
 ## 追記: 社内勉強会のルール
 
+ついでなので、このような社内勉強会を行う上で気を付けていたことを共有しようと思います。本勉強会は、もともとそれ以前の勉強会の続きという立ち位置で、始まりました。
+
 昨年、社内のバックエンドエンジニア数人で、プロダクトのコードを読むという勉強会を実施しており、その中で最終アウトプットとして、リファクタリングを行いました。
 
 実際やってみると、技術の伝承が行われるだけでなく、似た機能の実装スピードが上がったりなど、案外すぐ役に立つ良い機会となっていました。
-
-本勉強会はその続きという立ち位置で、次はOSSを読むことにしようという流れで始まりました。
 
 勉強会で、気を付けていたこととして
 
