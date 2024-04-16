@@ -6,6 +6,11 @@
 - [lmi-yumin](https://github.com/lmi-yumin)
 - [shirakurak](https://github.com/shirakurak)
 
+投稿先候補
+
+- QiitaTeam
+- Qiita
+
 ---
 
 # Ruby on RailsのActiveRecordを読む〜マイグレーションってどんなふうに実装されてるの？〜
@@ -18,7 +23,7 @@
 その不安を解消しつつ、信頼性の高い情報源を読めるようになりたい！と思い、OSSを読む社内勉強会を実施することになりました。
 
 何を読んでいくか考えた末、Ruby on Rails の中でもデータベースのスキーマを管理することができる Migrations を対象としました。
-いろいろ難しく、完全に理解したとはとても言えないですが、どのようにOSSを冒険していったかを共有できたらと思います。
+いろいろ難しく、完全に理解したとはとても言えないですが、どのようにOSSを**冒険**していったかを共有できたらと思います。
 
 ## 🧚 想定読者
 
@@ -36,12 +41,12 @@
 rails db:migrate VERSION=20220808075632
 ```
 
-本コマンドは、特定のバージョン番号に対応するマイグレーションをターゲットとし、データベースマイグレーションを実行します。マイグレーションファイルに記載されたデータベースのテーブルを作成、変更、削除することになりますが、他にも
+本コマンドは、特定のバージョン番号をターゲットとして、データベースマイグレーションを実行します。マイグレーションファイルに記載されたデータベースのテーブルを作成・変更・削除することになりますが、他にも
 
 - `db/schema.rb` のスキーマファイルを更新
 - `schema_migration` テーブルにタイムスタンプのレコードを追加
 
-などの処理が行われます。これらを含め、処理を見ていこうと考えました。
+などの処理が行われます。これら含め、具体的な処理を追っていきたいと考えました。
 
 ## 🧗‍♀️ 冒険内容
 
@@ -55,14 +60,16 @@ rails db:migrate VERSION=20220808075632
 
 <img width="800" alt="スクリーンショット 0006-04-01 9 19 02" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/d364f275-10ec-4332-abff-4d345bd9b8a9">
 
+ディレクトリ名を見てみると
+
 - Action View
 - Active Model
 - Active Support
 
 など、Rails の主要な機能（に対応するディレクトリ）の名前が並んでいますね。
-他のディレクトリを見るとRailsの興味深い実装があちらこちらあって、浮気しちゃいそうになります😇
+これらを覗いてみるとRailsの興味深い実装があちらこちらあって、浮気しちゃいそうになります😇
 
-その気持ちをグッと堪えて、activerecord ディレクトリを見ていきます。
+気持ちをグッと堪えて、activerecord ディレクトリを見ていきます。
 
 `activerecord` 配下で、マイグレーションしてそうなディレクトリとファイルを発見しました。
 
@@ -77,9 +84,9 @@ rails db:migrate VERSION=20220808075632
 まずどこから読めばいいかさっぱりだったので、それっぽいディレクト名を探して読んでいこうと考えました。 `activerecord/lib/active_record` ディレクトリ配下に `migration` というディレクトリを発見しました。ここ読めばいいんじゃね？と短絡的に考え、ざっと中身を見てみます。
 
 - `command_recorder.rb`
-  - マイグレーション中に行われたコマンドを記録し、それらを逆転させられる（マイグレーションのrevert）ようにする処理が書かれている？
+  - マイグレーション中に行われたコマンドを記録し、それらを逆転させられる（マイグレーションのrevert）処理が書かれている？
 - `compatibility.rb`
-  - Railsのバージョンが違う場合でもマイグレーションできるようにする（後方互換性？）処理が書かれている？
+  - Railsのバージョンが違う場合でも、マイグレーションできるようにする処理が書かれている？（後方互換性？）
 - `default_strategy.rb`
   - マイグレーション実行のための抽象クラスの役割を持っている？
 - `execution_strategy.rb`
@@ -89,11 +96,11 @@ rails db:migrate VERSION=20220808075632
 - `pending_migration_connection.rb`
   - 一時的なデータベース接続プールを作成するための機能を提供するための処理が書かれている？
 
-うーん、マイグレーションに関係するどこか処理ではありそうですが、本来の目的はここを読むだけでは達成できなそうです🙅‍♂️（というかようわからん）
+うーん、マイグレーションに関係する（やや抽象度の高いレイヤの）処理ではありそうですが、本来の目的はここを読むだけでは達成できなそうです🙅‍♂️（というかようわからん）
 
 #### `migration.rb` を見てみる
 
-他のディレクトリは何かあるかなぁとみていくと、 `migration.rb` というファイルを見つけました。中身はざっとこういう構成です：
+他のディレクトリは何かあるかなぁとみていくと、 `activerecord/lib/active_record/migration.rb` というファイルを見つけました。中身はざっとこういう構成です：
 
 - Error系のクラス
 - Migrationクラス
@@ -106,7 +113,7 @@ rails db:migrate VERSION=20220808075632
 
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/ea1d5bc2-0b20-465a-8420-248d85576fcc)
 
-「主要なワードで全検索してみたらいんじゃない？」という話になった（最初からそうした方が早かったやん...と思いつつ）ので、検索してみることにしました。
+上記のファイルを見ていくのも良さそうですが、「主要なワードで全検索してみたらいんじゃない？」という話になった（最初からそうした方が早かったやん...と思いつつ）ので、検索してみました。
 
 リポジトリ内で`.`を押すと、ブラウザ上でVSCode開くことができるので、そこで、「schema_migations」を検索してみます。
 
@@ -114,11 +121,11 @@ rails db:migrate VERSION=20220808075632
 
 すると、いくつかファイルがヒットし、ヒットしたファイルの中には、怪しそうだった`activerecord/lib/active_record/migration.rb`のファイルが！👏
 
-クラスとそのクラスに定義されているメソッドを読むことにしました。
+ここからは、そのクラスと定義されているいくつかのメソッドを読んでいくことにしました。
 
 <img width="450" alt="スクリーンショット 0006-04-05 3 01 42" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/fec5da43-87bb-47bc-976c-6498a8bdacce">
 
-各クラスを確認すると、upメソッドやdownメソッドなどが定義されていたり、migrateメソッドを実行したりしていたMigrationContextクラスにマイグレーション系の処理を行っていそうということが分かりました。マイグレーションっぽい...！
+各クラスを確認すると、`up`・`down`といったメソッドや、そもまま`migrate`メソッドが存在します。マイグレーションっぽい...！
 
 その後、メソッドを検索して辿って読んでいくと、`activerecord/lib/active_record/railties/databases.rake` のファイルで、実行したコマンドに関するタスクが実行されていることが分かりました👏
 
@@ -134,60 +141,60 @@ rails db:migrate VERSION=20220808075632
 rails db:migrate VERSION=20220808075632
 ```
 
-が実行されると、`activerecord/lib/active_record/railties/databases.rake`ファイル中で定義されている `db:migrate` のRakeタスクが走ることが分かりました。
+が実行されると、`activerecord/lib/active_record/railties/databases.rake` ファイル中で定義されている `db:migrate` のRakeタスクが走ることが分かりました。
 
-migrateだけでなく、status、rollback、versionなど、見たことがあるコマンドたちも見つかりました🌝
-
-確認のため、versionのタスクについてputsの文字列が出力されるかみてみました。
+migrateだけでなく、status、rollback、versionなど、見たことがあるコマンドたちも見つかります 🌝
 
 `activerecord/lib/active_record/railties/databases.rake`
 
 ```activerecord/lib/active_record/railties/databases.rake
-  desc "Retrieve the current schema version number"
-  task version: :load_config do
-    ActiveRecord::Tasks::DatabaseTasks.with_temporary_pool_for_each(env: Rails.env) do |pool|
-      puts "\ndatabase: #{pool.db_config.database}\n"
-      puts "Current version: #{pool.migration_context.current_version}"
-      puts
-    end
+desc "Retrieve the current schema version number"
+task version: :load_config do
+  ActiveRecord::Tasks::DatabaseTasks.with_temporary_pool_for_each(env: Rails.env) do |pool|
+    puts "\ndatabase: #{pool.db_config.database}\n"
+    puts "Current version: #{pool.migration_context.current_version}"
+    puts
   end
+end
 ```
 
-```
-$ rails db:version
+上記の実装を見ると、putsしているため、実際にそうだったっけなぁと確認してみると
+
+```sh
+rails db:version
 Running via Spring preloader in process 26
 Current version: 20220808075632
 ```
 
 ちゃんと書かれていることが確認できました！🙌
 
-ちなみに、:load_configは、`config/database.yml`ファイルのデータベース設定を読み込んで、データベースを接続するための準備をしています。
+ちなみに、:load_configは、`config/database.yml` ファイルのデータベース設定を読み込んで、データベースを接続するための準備をしています。
 
 それでは、本題の `db:migrate` を辿ります。
 
 `activerecord/lib/active_record/railties/databases.rake`
 
 ```activerecord/lib/active_record/railties/databases.rake
-  desc "Migrate the database (options: VERSION=x, VERBOSE=false, SCOPE=blog)."
-  task migrate: :load_config do
-    db_configs = ActiveRecord::Base.configurations.configs_for(env_name: ActiveRecord::Tasks::DatabaseTasks.env)
+desc "Migrate the database (options: VERSION=x, VERBOSE=false, SCOPE=blog)."
+task migrate: :load_config do
+  db_configs = ActiveRecord::Base.configurations.configs_for(env_name: ActiveRecord::Tasks::DatabaseTasks.env)
 
-    if db_configs.size == 1
-      ActiveRecord::Tasks::DatabaseTasks.migrate
-    else
-      mapped_versions = ActiveRecord::Tasks::DatabaseTasks.db_configs_with_versions
+  if db_configs.size == 1
+    ActiveRecord::Tasks::DatabaseTasks.migrate
+  else
+    mapped_versions = ActiveRecord::Tasks::DatabaseTasks.db_configs_with_versions
 
-      mapped_versions.sort.each do |version, db_configs|
-        db_configs.each do |db_config|
-          ActiveRecord::Tasks::DatabaseTasks.with_temporary_connection(db_config) do
-            ActiveRecord::Tasks::DatabaseTasks.migrate(version)
-          end
+    mapped_versions.sort.each do |version, db_configs|
+      db_configs.each do |db_config|
+        ActiveRecord::Tasks::DatabaseTasks.with_temporary_connection(db_config) do
+          ActiveRecord::Tasks::DatabaseTasks.migrate(version)
         end
       end
     end
-
-    db_namespace["_dump"].invoke
   end
+
+  db_namespace["_dump"].invoke
+end
 ```
 
 データベースが複数ある場合、ない場合で分岐されているようです。
@@ -197,37 +204,36 @@ ActiveRecord::Tasks::DatabaseTasks.migrate(version)
 ```
 
 ここでmigrateメソッドを実行しています！
-
 この時、versionsはソートされていることも確認できますね。
-
 では、DatabaseTasksクラスが定義されている所を見ていきましょう。
 
 `activerecord/lib/active_record/tasks/database_tasks.rb` ー①
 
 ```activerecord/lib/active_record/tasks/database_tasks.rb
-      def migrate(version = nil)
-        scope = ENV["SCOPE"]
-        verbose_was, Migration.verbose = Migration.verbose, verbose?
+def migrate(version = nil)
+  scope = ENV["SCOPE"]
+  verbose_was, Migration.verbose = Migration.verbose, verbose?
 
-        check_target_version
+  check_target_version
 
-        migration_connection_pool.migration_context.migrate(target_version) do |migration|
-          if version.blank?
-            scope.blank? || scope == migration.scope
-          else
-            migration.version == version
-          end
-        end.tap do |migrations_ran|
-          Migration.write("No migrations ran. (using #{scope} scope)") if scope.present? && migrations_ran.empty?
-        end
+  migration_connection_pool.migration_context.migrate(target_version) do |migration|
+    if version.blank?
+      scope.blank? || scope == migration.scope
+    else
+      migration.version == version
+    end
+  end.tap do |migrations_ran|
+    Migration.write("No migrations ran. (using #{scope} scope)") if scope.present? && migrations_ran.empty?
+  end
 
-        migration_connection_pool.schema_cache.clear!
-      ensure
-        Migration.verbose = verbose_was
-      end
+  migration_connection_pool.schema_cache.clear!
+ensure
+  Migration.verbose = verbose_was
+end
 ```
 
 ```ruby
+...
 migration_connection_pool.migration_context.migrate(target_version) do |migration|
 ...
 ```
@@ -306,16 +312,16 @@ migrateメソッドでは、マイグレーションの実行中にアドバイ�
 
 ```ruby
 class Migrator
-  ・・・
-    private
-      def migrate_without_lock
-        if invalid_target?
-          raise UnknownMigrationVersionError.new(@target_version)
-        end
-
-        record_environment
-        runnable.each(&method(:execute_migration_in_transaction))
+  ...
+  private
+    def migrate_without_lock
+      if invalid_target?
+        raise UnknownMigrationVersionError.new(@target_version)
       end
+
+      record_environment
+      runnable.each(&method(:execute_migration_in_transaction))
+    end
 ```
 
 migrate_without_lockが実行されると、execute_migration_in_transactionメソッドが最後に実行されていることがわかったので、
@@ -326,7 +332,7 @@ migrate_without_lockが実行されると、execute_migration_in_transactionメ�
 
 ```activerecord/lib/active_record/migration.rb
 Class Migrator
-  ・・・
+  ...
     private
       def execute_migration_in_transaction(migration)
           return if down? && !migrated.include?(migration.version.to_i)
