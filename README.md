@@ -18,14 +18,14 @@
 \#冒険
 \#コードを読む会
 
-こんにちは！ 私（達）は Ruby on Rails でプロダクト開発をしているエンジニアです。
+こんにちは！ 私達は Ruby on Rails でプロダクト開発をしているエンジニアです。
 日々、Ruby on Rails を使用していると、（その多機能さゆえ）「内部で何が起きてるんだろう...？🤔」と不安になることがよくありました。
 その不安を解消しつつ、信頼性の高い情報源を読めるようになりたい！と思い、OSSを読む社内勉強会を実施することにしました。
 
 何を読んでいくか考えた末、Ruby on Rails の中でもデータベースのスキーマを管理することができる Migrations を対象としました。
 いろいろ難しく、完全に理解したとはとても言えないですが、どのように OSS を**冒険**していったかを共有できたらと思います。
 
-※本記事は、3人（[tomohiko9090](https://github.com/tomohiko9090), [lmi-yumin](https://github.com/lmi-yumin), [shirakurak](https://github.com/shirakurak)）の共著となります
+※本記事は、3人（[tomohiko9090](https://github.com/tomohiko9090), [lmi-yumin](https://github.com/lmi-yumin), [shirakurak](https://github.com/shirakurak)）の共著となります。
 
 ## 🧚 想定読者
 
@@ -115,7 +115,7 @@ rails db:migrate VERSION=20220808075632
 
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/ea1d5bc2-0b20-465a-8420-248d85576fcc)
 
-上記のファイルを見ていくのも良さそうですが、「主要なワードで全検索してみたらいんじゃない？」という話になった（最初からそうした方が早かったやん...と思いつつ）ので、検索してみました。
+上記のファイルを見ていくのも良さそうですが、「主要なワードで全検索してみたらいんじゃない？」という話になったので（最初からそうした方が早かったやん...というツッコミは置いておいて）、検索してみました。
 
 リポジトリ内で `.` を押すと、ブラウザ上で VSCode を開くことができるので、そこで、「schema_migations」を検索してみます。
 
@@ -145,7 +145,7 @@ rails db:migrate VERSION=20220808075632
 
 が実行されると、`activerecord/lib/active_record/railties/databases.rake` ファイル中で定義されている `db:migrate` の Rake タスクが走ることが分かりました。
 
-migrate だけでなく、status、rollback、version など、見たことがあるコマンドたちも見つかります 🌝
+migrate だけでなく、`status`、`rollback`、`version` など、見たことがあるコマンドたちも見つかります 🌝
 
 `activerecord/lib/active_record/railties/databases.rake`
 
@@ -160,7 +160,7 @@ task version: :load_config do
 end
 ```
 
-上記の実装を見ると、puts しているため、実際にそうだったっけなぁと確認してみると
+これが本当に、`version` コマンドの実装なのか？と思いつつ、実際にコマンドを確認してみると
 
 ```sh
 rails db:version
@@ -168,15 +168,15 @@ Running via Spring preloader in process 26
 Current version: 20220808075632
 ```
 
-ちゃんと書かれていることが確認できました！🙌
+となっており、確かに `Current version:...` を出力していました！🙌
 
-ちなみに、:load_config は、`config/database.yml` ファイルのデータベース設定を読み込んで、データベースを接続するための準備をしています。
+ちなみに、`:load_config` は、`config/database.yml` ファイルのデータベース設定を読み込んで、データベースを接続するための準備をしています。
 
 それでは、本題の `db:migrate` を辿ります。
 
 `activerecord/lib/active_record/railties/databases.rake`
 
-```activerecord/lib/active_record/railties/databases.rake
+```rake
 desc "Migrate the database (options: VERSION=x, VERBOSE=false, SCOPE=blog)."
 task migrate: :load_config do
   db_configs = ActiveRecord::Base.configurations.configs_for(env_name: ActiveRecord::Tasks::DatabaseTasks.env)
@@ -240,15 +240,15 @@ migration_connection_pool.migration_context.migrate(target_version) do |migratio
 ...
 ```
 
-によって、データベースに接続したあと、migration_contextメソッドが呼び出され、MigrationContextクラスのmigrateメソッドが呼び出されることが分かりました。
+によって、データベースに接続したあと、`migration_context` メソッドが呼び出され、`MigrationContext` クラスの `migrate` メソッドが呼び出されることが分かりました。
 
 ### STEP5.マイグレーション処理の特定
 
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/a251ffd3-00c9-4c34-ad74-81073962f8a9)
 
-MigrationContextクラスを辿っていきます🫡
+`MigrationContext` クラスを辿っていきます🫡
 
-activerecord/lib/active_record/migration.rb
+`activerecord/lib/active_record/migration.rb`
 
 ```rb
 Class MigrationContext
@@ -267,11 +267,9 @@ Class MigrationContext
     end
 ```
 
-migrateメソッドでは、target_versionによる分岐が行われており、activerecord/lib/active_record/tasks/database_tasks.rbファイルのtarget_versionメソッドで渡されているENV["VERSION"]、
+`migrate` メソッドでは、`target_version` による分岐が行われており、`activerecord/lib/active_record/tasks/database_tasks.rb` ファイルの `target_version` メソッドで渡されている `ENV["VERSION"]` つまり、コマンドで指定した日付（VERSION=20220808075632）を使っているようです。
 
-つまり、コマンドで指定した日付（VERSION=20220808075632）を使っているようです。
-
-その後、target_versionによって分岐され、同じクラス内のupメソッドやdownメソッドが実行されると、
+その後、`target_version` によって分岐され、同じクラス内の `up` メソッドや `down` メソッドが実行されると、
 
 `activerecord/lib/active_record/migration.rb`
 
@@ -295,7 +293,7 @@ Class MigrationContext
 
 `activerecord/lib/active_record/migration.rb`
 
-```activerecord/lib/active_record/migration.rb
+```rb
 class Migrator
   ・・・
     def migrate
@@ -312,7 +310,7 @@ migrateメソッドでは、マイグレーションの実行中にアドバイ�
 
 今回は、マイグレーションの処理を見つけられればよいで、アドバイザリーロックがない場合のmigrate_without_lockメソッドを見ていきます。
 
-```ruby
+```rb
 class Migrator
   ...
   private
@@ -332,7 +330,7 @@ migrate_without_lockが実行されると、execute_migration_in_transactionメ�
 
 `activerecord/lib/active_record/migration.rb`
 
-```activerecord/lib/active_record/migration.rb
+```rb
 Class Migrator
   ...
     private
