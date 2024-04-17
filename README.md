@@ -25,6 +25,8 @@
 何を読んでいくか考えた末、Ruby on Rails の中でもデータベースのスキーマを管理することができる Migrations を対象としました。
 いろいろ難しく、完全に理解したとはとても言えないですが、どのように OSS を**冒険**していったかを共有できたらと思います。
 
+※本記事は、3人（[tomohiko9090](https://github.com/tomohiko9090), [lmi-yumin](https://github.com/lmi-yumin), [shirakurak](https://github.com/shirakurak)）の共著となります
+
 ## 🧚 想定読者
 
 - Rails を使えるだけでなく、Rails の仕組みに興味がある人！
