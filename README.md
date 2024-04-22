@@ -128,7 +128,7 @@ rails db:migrate VERSION=20220808075632
 
 <img width="450" alt="スクリーンショット 0006-04-05 3 01 42" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/fec5da43-87bb-47bc-976c-6498a8bdacce">
 
-各クラスを確認すると、`up`・`down`といったメソッドや、そのまま `migrate` メソッドが存在します。マイグレーションっぽい...！
+各クラスを確認すると、`up` / `down`といったメソッドや、そのまま `migrate` メソッドが存在します。マイグレーションっぽい...！
 
 その後、メソッドを検索して辿って読んでいくと、 `activerecord/lib/active_record/railties/databases.rake` のファイルで、実行したコマンドに関するタスクが実行されていることが分かりました。ここで正しそう 👏
 
