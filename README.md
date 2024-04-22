@@ -118,7 +118,7 @@ rails db:migrate VERSION=20220808075632
 
 リポジトリ内で `.` を押すと、ブラウザ上で VSCode を開くことができるので、そこで、「schema_migations」を検索してみます。
 
-※ 余談ですが、この機能を知らないメンバーもいて、勉強会で地味に盛り盛り上がりました
+※ 余談ですが、この機能を知らないメンバーもいて、勉強会で地味に盛り上がりました
 
 <img width="1290" alt="スクリーンショット 0006-04-01 17 45 19" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/54f66632-863f-4005-a8e2-de4c6a2a91f1">
 
