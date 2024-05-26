@@ -13,10 +13,19 @@
 
 ---
 
-# Ruby on Rails の ActiveRecord を読む 〜マイグレーションってどんなふうに実装されてるの？〜
+# はじめに
+こんにちは、葛葉（くずば）です!
 
-\#冒険
-\#コードを読む会
+普段は、モチベーションクラウドの多言語対応や型検査導入などRubyのバックエンドエンジニアとして、日々活動しています。
+
+[https://qiita.com/tomohiko9090/items/2491649e2144acafee73:embed:cite]
+
+本記事では、エンジニアの先輩2人と一緒に行なっていた「コードを読む会」の内容を書きたいと思います。
+
+*このブログでは「冒険」をメイドインアビスになぞらえて表現しています。<br>
+参考: [メイドインアビス](http://miabyss.com/)
+
+# Ruby on Rails の ActiveRecord を読む 〜マイグレーションってどんなふうに実装されてるの？〜
 
 私たちは日々、Ruby on Rails を使用してプロダクト開発をしているのですが（その多機能さゆえ）「内部で何が起きてるんだろう...？🤔」と疑問に思うことがありました。
 そういった疑問を解消しつつ、信頼性の高い情報源を読めるようになりたい！と考え、OSSを読む社内勉強会を実施することにしました。
@@ -34,7 +43,7 @@
 
 ## 🕵️‍♀️ 調査内容
 
-### 調査対象とするマイグレーション処理
+### 調査対象とするのは「マイグレーション処理」
 
 マイグレーションには複数の機能がありますが、今回は対象を絞り、以下のコマンドの流れを（ふんわりとでも）理解することを目標としました。
 
@@ -51,7 +60,7 @@ rails db:migrate VERSION=20220808075632
 
 ## 🧗‍♀️ 冒険内容
 
-### STEP1 全体像の把握
+### STEP1️⃣ 全体像の把握
 
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/a495fd7d-ad00-4203-a6ba-b6e2797e0c4b)
 
@@ -76,7 +85,7 @@ rails db:migrate VERSION=20220808075632
 
 <img width="777" alt="スクリーンショット 0006-04-01 17 16 43" src="https://github.com/shirakurak/code_reading_mtg/assets/66200485/cfa4e646-6f59-418a-99f5-09803acbf3b3">
 
-### STEP2 ファイルの中身を確認
+### STEP2️⃣ ファイルの中身を確認
 
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/d4e0288a-982f-4140-a4b1-518c9a844a20)
 
@@ -110,7 +119,7 @@ rails db:migrate VERSION=20220808075632
 
 どうやらこれは怪しそうだ。。👀
 
-### STEP3 キーワード検索
+### STEP3️⃣ キーワード検索
 
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/ea1d5bc2-0b20-465a-8420-248d85576fcc)
 
@@ -132,7 +141,7 @@ rails db:migrate VERSION=20220808075632
 
 その後、メソッドを検索して辿って読んでいくと、 `activerecord/lib/active_record/railties/databases.rake` のファイルで、実行したコマンドに関するタスクが実行されていることが分かりました。ここで正しそう 👏
 
-### STEP4 Rakeタスクの実行
+### STEP4️⃣ Rakeタスクの実行
 
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/1abb443c-0f45-4254-940d-01dee2e1caa1)
 
@@ -235,7 +244,7 @@ end
 
 ```migration_connection_pool.migration_context.migrate(target_version)``` によって、データベースに接続したあと、`migration_context` メソッドが呼び出され、`MigrationContext` クラスの `migrate` メソッドが呼び出されることが分かります。この辺は同じような名前のメソッドが複数あり、検索して追っていくのは、なかなか難しかったです。
 
-### STEP5 マイグレーション処理の特定
+### STEP5️⃣ マイグレーション処理の特定
 
 ![image](https://github.com/shirakurak/code_reading_mtg/assets/66200485/a251ffd3-00c9-4c34-ad74-81073962f8a9)
 
@@ -361,7 +370,7 @@ OSSだからといって、特別視する必要はないと思えたことが�
 
 OSSの旅は、これからが本当の始まりです 🚀
 
-## 追記: 社内勉強会のポイント
+## 追伸: 社内勉強会のポイント
 
 追記として、今回の社内勉強会を実施していく上で気をつけていたことを、3つだけ共有しようと思います。
 
